@@ -1,0 +1,9 @@
+[package]
+name = "adrenochrome_engine"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Raycaster rendering engine for Adrenochrome Ascent"
+
+[dependencies]
+bevy.workspace = true

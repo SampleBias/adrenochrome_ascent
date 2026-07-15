@@ -1,0 +1,20 @@
+[workspace]
+members = ["engine", "gameplay", "content", "app"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Adrenochrome Ascent Team"]
+description = "A retro first-person horror-action game built in Rust + Bevy"
+
+[workspace.dependencies]
+bevy = "0.19"
+
+# Enable dynamic linking for faster dev iteration across all workspace members.
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+opt-level = 3
+lto = "thin"

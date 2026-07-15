@@ -1,0 +1,10 @@
+[package]
+name = "adrenochrome_content"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Floor data, asset definitions, and content for Adrenochrome Ascent"
+
+[dependencies]
+bevy.workspace = true
+adrenochrome_engine = { path = "../engine" }

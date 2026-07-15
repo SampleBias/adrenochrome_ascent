@@ -1,0 +1,10 @@
+[package]
+name = "adrenochrome_gameplay"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "ECS gameplay systems, player, enemy, puzzle for Adrenochrome Ascent"
+
+[dependencies]
+bevy.workspace = true
+adrenochrome_engine = { path = "../engine" }

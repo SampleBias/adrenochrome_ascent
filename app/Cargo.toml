@@ -1,0 +1,16 @@
+[package]
+name = "adrenochrome_ascent"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+
+[[bin]]
+name = "adrenochrome_ascent"
+path = "src/main.rs"
+
+[dependencies]
+bevy.workspace = true
+adrenochrome_engine = { path = "../engine" }
+adrenochrome_gameplay = { path = "../gameplay" }
+adrenochrome_content = { path = "../content" }
