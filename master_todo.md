@@ -24,7 +24,7 @@ Key Features: Custom raycaster / low-res 320x200 CRT aesthetic, puzzle DSL, enem
 **Owner:** Engine Team (Master Devs lead)
 
 - [x] **[TODO-001]** Initialize Bevy 0.15+ project with Cargo workspaces (engine, gameplay, content crates). Add core plugins: `bevy_ecs`, `bevy_sprite`, `bevy_asset`, `bevy_audio`. (2 days)
-- [ ] **[TODO-002]** Set up 320×200 internal render target with nearest-neighbor upscale + basic CRT shader pipeline supporting palette swaps. (4 days)
+- [x] **[TODO-002]** Set up 320×200 internal render target with nearest-neighbor upscale + basic CRT shader pipeline supporting palette swaps. (4 days)
 - [ ] **[MASTER]** **[TODO-003]** Implement custom software raycaster (Doom-style) or `bevy_voxel` hybrid. Support billboard sprites for enemies and hand. (1 week)
 - [ ] **[TODO-004]** Basic first-person controller (WASD + mouse look, Doom-style movement/friction). (3 days)
 - [ ] **[TODO-005]** Create main game state enum (`MainMenu`, `InGame`, `ElevatorTransition`, `Ending`). (2 days)
