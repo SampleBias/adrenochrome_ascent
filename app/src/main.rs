@@ -6,9 +6,7 @@
 //! survive limited combat, reach elevator, ascend. Custom software raycaster
 //! renders to a 320×200 internal target, upscaled with a CRT shader.
 //!
-//! TODO-001: Workspace scaffold. This binary wires up the engine, gameplay,
-//! and content plugins. Rendering and gameplay systems are added in
-//! subsequent TODOs (002-005).
+//! Plugins: engine (raycaster/CRT), gameplay (player + GameState flow), content.
 
 #![allow(dead_code)]
 

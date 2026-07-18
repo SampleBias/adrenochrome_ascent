@@ -1,0 +1,371 @@
+//! Doom-style software DDA raycaster.
+//!
+//! Each frame, casts one ray per screen column into [`MapGrid`], draws textured
+//! walls with distance shading, paints a simple floor/ceiling, then projects
+//! [`Billboard`] sprites and the [`HandOverlay`] into the 320×200 CPU
+//! framebuffer sampled by the CRT upscale material.
+
+use bevy::prelude::*;
+
+use crate::{
+    billboard::{Billboard, HandOverlay},
+    map::MapGrid,
+    palette::{RENDER_HEIGHT, RENDER_WIDTH},
+    ray_camera::RayCamera,
+    render_target::LowResTarget,
+    textures::{TextureSet, TEX_SIZE},
+};
+
+const CEILING: [u8; 3] = [10, 16, 12];
+const FLOOR_A: [u8; 3] = [28, 22, 30];
+const FLOOR_B: [u8; 3] = [14, 12, 16];
+const FOG_RGB: [u8; 3] = [4, 2, 4];
+const FOG_START: f32 = 2.5;
+const FOG_END: f32 = 14.0;
+
+/// Per-column wall depth for sprite occlusion (map units).
+#[derive(Resource, Clone)]
+pub struct DepthBuffer {
+    pub z: Vec<f32>,
+}
+
+impl Default for DepthBuffer {
+    fn default() -> Self {
+        Self {
+            z: vec![f32::INFINITY; RENDER_WIDTH as usize],
+        }
+    }
+}
+
+/// Cast walls / floor / ceiling / sprites into the low-res framebuffer.
+pub fn render_frame(
+    camera: Res<RayCamera>,
+    map: Res<MapGrid>,
+    textures: Res<TextureSet>,
+    target: Res<LowResTarget>,
+    mut images: ResMut<Assets<Image>>,
+    mut depth: ResMut<DepthBuffer>,
+    billboards: Query<&Billboard>,
+    hands: Query<&HandOverlay>,
+    time: Res<Time>,
+) {
+    let Some(mut image) = images.get_mut(&target.0) else {
+        return;
+    };
+    let Some(buf) = image.data.as_mut() else {
+        return;
+    };
+
+    let w = RENDER_WIDTH as usize;
+    let h = RENDER_HEIGHT as usize;
+    depth.z.fill(f32::INFINITY);
+
+    // --- Floor + ceiling (solid with checkered near-floor suggestion) ---
+    for y in 0..h {
+        let is_ceil = y < h / 2;
+        for x in 0..w {
+            let color = if is_ceil {
+                CEILING
+            } else {
+                // Perspective-ish checker using screen y as fake depth.
+                let row = (h - 1 - y) as f32;
+                let checker = ((x / 12) + (row as usize / 8)) % 2 == 0;
+                let mut c = if checker { FLOOR_A } else { FLOOR_B };
+                // Blood wash near bottom.
+                if y > h * 3 / 4 && checker {
+                    c = [90, 24, 48];
+                }
+                // Darken with "distance" (higher on screen = farther floor).
+                let dist_factor = (y as f32 / h as f32).clamp(0.25, 1.0);
+                c = [
+                    (c[0] as f32 * dist_factor) as u8,
+                    (c[1] as f32 * dist_factor) as u8,
+                    (c[2] as f32 * dist_factor) as u8,
+                ];
+                c
+            };
+            put_bgra(buf, w, x, y, color[0], color[1], color[2], 255);
+        }
+    }
+
+    // --- Walls (DDA per column) ---
+    for col in 0..w {
+        let cam_x = 2.0 * col as f32 / w as f32 - 1.0;
+        let ray_dir = camera.dir + camera.plane * cam_x;
+
+        let (dist, wall_tex, wall_x, side) = cast_ray(&map, camera.pos, ray_dir);
+        depth.z[col] = dist;
+
+        // Perpendicular wall distance already from cast; line height.
+        let line_h = if dist > 0.0001 {
+            (h as f32 / dist) as i32
+        } else {
+            h as i32
+        };
+        let mut draw_start = -line_h / 2 + h as i32 / 2;
+        let mut draw_end = line_h / 2 + h as i32 / 2;
+        if draw_start < 0 {
+            draw_start = 0;
+        }
+        if draw_end >= h as i32 {
+            draw_end = h as i32 - 1;
+        }
+
+        let tex_x = ((wall_x * TEX_SIZE as f32) as usize).min(TEX_SIZE - 1);
+
+        for y in draw_start..=draw_end {
+            let d = y * 256 - h as i32 * 128 + line_h * 128;
+            let tex_y = (((d * TEX_SIZE as i32) / line_h) / 256)
+                .clamp(0, TEX_SIZE as i32 - 1) as usize;
+            let mut px = textures.wall(wall_tex, tex_x, tex_y);
+            // Side shading (y-sides darker) for depth cue.
+            if side == 1 {
+                px[0] = px[0] / 2;
+                px[1] = px[1] / 2;
+                px[2] = px[2] / 2;
+            }
+            let shaded = apply_fog(px, dist);
+            put_bgra(
+                buf,
+                w,
+                col,
+                y as usize,
+                shaded[0],
+                shaded[1],
+                shaded[2],
+                255,
+            );
+        }
+    }
+
+    // --- World billboards ---
+    let mut sprites: Vec<&Billboard> = billboards.iter().collect();
+    sprites.sort_by(|a, b| {
+        let da = (a.pos - camera.pos).length_squared();
+        let db = (b.pos - camera.pos).length_squared();
+        db.partial_cmp(&da).unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    for sprite in sprites {
+        draw_billboard(
+            buf,
+            w,
+            h,
+            &depth.z,
+            &camera,
+            &textures,
+            sprite,
+        );
+    }
+
+    // --- Hand overlay (screen space, after world) ---
+    for hand in &hands {
+        draw_hand(buf, w, h, &textures, hand, time.elapsed_secs());
+    }
+}
+
+/// DDA cast. Returns (perp_distance, texture_id, wall_x 0..1, side 0=x 1=y).
+fn cast_ray(map: &MapGrid, pos: Vec2, ray_dir: Vec2) -> (f32, u8, f32, i32) {
+    let mut map_x = pos.x.floor() as i32;
+    let mut map_y = pos.y.floor() as i32;
+
+    let delta_dist_x = if ray_dir.x.abs() < 1e-8 {
+        1e30
+    } else {
+        (1.0 / ray_dir.x).abs()
+    };
+    let delta_dist_y = if ray_dir.y.abs() < 1e-8 {
+        1e30
+    } else {
+        (1.0 / ray_dir.y).abs()
+    };
+
+    let (step_x, mut side_dist_x) = if ray_dir.x < 0.0 {
+        (-1, (pos.x - map_x as f32) * delta_dist_x)
+    } else {
+        (1, (map_x as f32 + 1.0 - pos.x) * delta_dist_x)
+    };
+    let (step_y, mut side_dist_y) = if ray_dir.y < 0.0 {
+        (-1, (pos.y - map_y as f32) * delta_dist_y)
+    } else {
+        (1, (map_y as f32 + 1.0 - pos.y) * delta_dist_y)
+    };
+
+    let mut side = 0;
+    let mut hit = 0u8;
+    for _ in 0..64 {
+        if side_dist_x < side_dist_y {
+            side_dist_x += delta_dist_x;
+            map_x += step_x;
+            side = 0;
+        } else {
+            side_dist_y += delta_dist_y;
+            map_y += step_y;
+            side = 1;
+        }
+        hit = map.get(map_x as isize, map_y as isize);
+        if hit != 0 {
+            break;
+        }
+    }
+
+    let perp = if side == 0 {
+        (map_x as f32 - pos.x + (1 - step_x) as f32 / 2.0) / ray_dir.x
+    } else {
+        (map_y as f32 - pos.y + (1 - step_y) as f32 / 2.0) / ray_dir.y
+    }
+    .abs()
+    .max(0.0001);
+
+    let wall_x = if side == 0 {
+        pos.y + perp * ray_dir.y
+    } else {
+        pos.x + perp * ray_dir.x
+    };
+    let wall_x = wall_x - wall_x.floor();
+
+    (perp, hit, wall_x, side)
+}
+
+fn draw_billboard(
+    buf: &mut [u8],
+    w: usize,
+    h: usize,
+    zbuf: &[f32],
+    camera: &RayCamera,
+    textures: &TextureSet,
+    sprite: &Billboard,
+) {
+    let rel = sprite.pos - camera.pos;
+    // Inverse camera matrix.
+    let inv_det = 1.0 / (camera.plane.x * camera.dir.y - camera.dir.x * camera.plane.y);
+    let transform_x = inv_det * (camera.dir.y * rel.x - camera.dir.x * rel.y);
+    let transform_y = inv_det * (-camera.plane.y * rel.x + camera.plane.x * rel.y);
+
+    if transform_y <= 0.05 {
+        return; // behind camera
+    }
+
+    let sprite_screen_x = ((w as f32 / 2.0) * (1.0 + transform_x / transform_y)) as i32;
+    let sprite_h = (h as f32 / transform_y * sprite.scale).abs() as i32;
+    let sprite_w = sprite_h; // square sprites
+
+    let draw_start_y = (-sprite_h / 2 + h as i32 / 2).max(0);
+    let draw_end_y = (sprite_h / 2 + h as i32 / 2).min(h as i32 - 1);
+    let draw_start_x = (-sprite_w / 2 + sprite_screen_x).max(0);
+    let draw_end_x = (sprite_w / 2 + sprite_screen_x).min(w as i32 - 1);
+
+    for stripe in draw_start_x..=draw_end_x {
+        let tex_x = ((256 * (stripe - (-sprite_w / 2 + sprite_screen_x)) * TEX_SIZE as i32)
+            / sprite_w)
+            / 256;
+        if tex_x < 0 || tex_x >= TEX_SIZE as i32 {
+            continue;
+        }
+        if transform_y >= zbuf[stripe as usize] {
+            continue; // occluded by wall
+        }
+        for y in draw_start_y..=draw_end_y {
+            let d = y * 256 - h as i32 * 128 + sprite_h * 128;
+            let tex_y = (((d * TEX_SIZE as i32) / sprite_h) / 256)
+                .clamp(0, TEX_SIZE as i32 - 1) as usize;
+            let px = textures.sprite(sprite.texture_id, tex_x as usize, tex_y);
+            if px[3] < 16 {
+                continue;
+            }
+            let shaded = apply_fog(px, transform_y);
+            // Alpha blend over destination.
+            let di = (y as usize * w + stripe as usize) * 4;
+            let dest_b = buf[di];
+            let dest_g = buf[di + 1];
+            let dest_r = buf[di + 2];
+            let a = px[3] as f32 / 255.0;
+            let r = (shaded[0] as f32 * a + dest_r as f32 * (1.0 - a)) as u8;
+            let g = (shaded[1] as f32 * a + dest_g as f32 * (1.0 - a)) as u8;
+            let b = (shaded[2] as f32 * a + dest_b as f32 * (1.0 - a)) as u8;
+            put_bgra(buf, w, stripe as usize, y as usize, r, g, b, 255);
+        }
+    }
+}
+
+fn draw_hand(
+    buf: &mut [u8],
+    w: usize,
+    h: usize,
+    textures: &TextureSet,
+    hand: &HandOverlay,
+    time: f32,
+) {
+    let size = ((h as f32 * 0.42) * hand.scale) as i32;
+    let cx = (hand.anchor.x * w as f32) as i32;
+    let cy = (hand.anchor.y * h as f32) as i32;
+    let x0 = cx - size / 2;
+    let y0 = cy - size / 2;
+
+    let pulse = if hand.glow_pulse > 0.0 {
+        0.85 + 0.15 * (time * hand.glow_pulse).sin()
+    } else {
+        1.0
+    };
+
+    for sy in 0..size {
+        for sx in 0..size {
+            let x = x0 + sx;
+            let y = y0 + sy;
+            if x < 0 || y < 0 || x >= w as i32 || y >= h as i32 {
+                continue;
+            }
+            let tx = (sx * TEX_SIZE as i32 / size).clamp(0, TEX_SIZE as i32 - 1) as usize;
+            let ty = (sy * TEX_SIZE as i32 / size).clamp(0, TEX_SIZE as i32 - 1) as usize;
+            let mut px = textures.sprite(hand.texture_id, tx, ty);
+            if px[3] < 16 {
+                continue;
+            }
+            // Boost magenta outline glow.
+            if px[0] > 180 && px[2] > 120 {
+                px[0] = ((px[0] as f32) * pulse).min(255.0) as u8;
+                px[2] = ((px[2] as f32) * pulse).min(255.0) as u8;
+            }
+            put_bgra(buf, w, x as usize, y as usize, px[0], px[1], px[2], 255);
+        }
+    }
+}
+
+fn apply_fog(px: [u8; 4], dist: f32) -> [u8; 4] {
+    let t = ((dist - FOG_START) / (FOG_END - FOG_START)).clamp(0.0, 1.0);
+    [
+        lerp_u8(px[0], FOG_RGB[0], t),
+        lerp_u8(px[1], FOG_RGB[1], t),
+        lerp_u8(px[2], FOG_RGB[2], t),
+        px[3],
+    ]
+}
+
+fn lerp_u8(a: u8, b: u8, t: f32) -> u8 {
+    (a as f32 * (1.0 - t) + b as f32 * t) as u8
+}
+
+#[inline]
+fn put_bgra(buf: &mut [u8], w: usize, x: usize, y: usize, r: u8, g: u8, b: u8, a: u8) {
+    let i = (y * w + x) * 4;
+    if i + 3 < buf.len() {
+        buf[i] = b;
+        buf[i + 1] = g;
+        buf[i + 2] = r;
+        buf[i + 3] = a;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::map::MapGrid;
+
+    #[test]
+    fn cast_hits_wall() {
+        let map = MapGrid::from_rows(&["###", "#.#", "###"]);
+        let (dist, tex, _, _) = cast_ray(&map, Vec2::new(1.5, 1.5), Vec2::new(1.0, 0.0));
+        assert!(dist > 0.0 && dist < 2.0);
+        assert_ne!(tex, 0);
+    }
+}

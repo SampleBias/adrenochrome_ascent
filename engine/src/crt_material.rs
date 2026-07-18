@@ -70,11 +70,6 @@ impl Material2d for CrtMaterial {
 #[derive(Component)]
 pub struct UpscaleCamera;
 
-/// Marker on the low-res camera that renders the game scene into the 320×200
-/// render target.
-#[derive(Component)]
-pub struct LowResSceneCamera;
-
 /// Marker on the fullscreen CRT quad so resize logic does not touch scene meshes.
 #[derive(Component)]
 pub struct CrtFullscreenQuad;

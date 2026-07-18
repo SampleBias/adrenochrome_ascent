@@ -1,58 +1,48 @@
-//! 320×200 internal render target + dual-camera setup.
+//! 320×200 CPU framebuffer + CRT upscale camera setup.
 //!
-//! This module owns the "render the game to a low-res image, then upscale it
-//! to the window" pipeline:
-//!
-//! - A 320×200 `Image` with nearest-neighbor sampling.
-//! - A `Camera2d` (`LowResSceneCamera`, order -1) targeting that image.
-//! - A `Camera2d` (`UpscaleCamera`, order 0) targeting the window with a
-//!   fullscreen [`CrtMaterial`] quad (scanlines / vignette / dither / tint).
+//! The software raycaster writes BGRA pixels into [`LowResTarget`] each frame.
+//! An `UpscaleCamera` draws a fullscreen [`CrtMaterial`] quad that samples the
+//! buffer with nearest-neighbor filtering (scanlines / vignette / palette tint).
 
 use bevy::{
-    camera::RenderTarget,
     prelude::*,
-    render::render_resource::TextureFormat,
+    render::render_resource::{Extent3d, TextureDimension, TextureFormat, TextureUsages},
 };
 
 use crate::{
-    crt_material::{CrtFullscreenQuad, CrtMaterial, LowResSceneCamera, UpscaleCamera},
+    crt_material::{CrtFullscreenQuad, CrtMaterial, UpscaleCamera},
     palette::{ActivePalette, Palette, RENDER_HEIGHT, RENDER_WIDTH},
 };
 
-/// Resource handle to the 320×200 render-target image.
+/// Resource handle to the 320×200 CPU/GPU framebuffer image.
 #[derive(Resource, Clone, Deref, DerefMut)]
 pub struct LowResTarget(pub Handle<Image>);
 
-/// Spawns the render-target image and both cameras.
+/// Spawns the framebuffer image, upscale camera, and CRT fullscreen quad.
 pub fn setup_render_target(
     mut commands: Commands,
     mut images: ResMut<Assets<Image>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CrtMaterial>>,
 ) {
-    let mut target = Image::new_target_texture(
-        RENDER_WIDTH,
-        RENDER_HEIGHT,
+    // CPU-writable framebuffer. The raycaster mutates `Image::data` each frame;
+    // Bevy re-uploads when the asset is marked changed via `Assets::get_mut`.
+    let mut target = Image::new_fill(
+        Extent3d {
+            width: RENDER_WIDTH,
+            height: RENDER_HEIGHT,
+            depth_or_array_layers: 1,
+        },
+        TextureDimension::D2,
+        &[0, 0, 0, 255], // BGRA black
         TextureFormat::Bgra8UnormSrgb,
-        None,
+        bevy::asset::RenderAssetUsages::default(),
     );
+    target.texture_descriptor.usage = TextureUsages::TEXTURE_BINDING | TextureUsages::COPY_DST;
     target.sampler = bevy::image::ImageSampler::nearest();
 
     let target_handle = images.add(target);
     commands.insert_resource(LowResTarget(target_handle.clone()));
-
-    // Near-black clear — darkness-forward horror (style refs).
-    commands.spawn((
-        Name::new("LowResSceneCamera"),
-        Camera2d,
-        Camera {
-            order: -1,
-            clear_color: Color::srgb(0.01, 0.008, 0.012).into(),
-            ..default()
-        },
-        RenderTarget::Image(target_handle.clone().into()),
-        LowResSceneCamera,
-    ));
 
     let tint = Palette::Red.tint();
     let crt_material = materials.add(CrtMaterial::new(target_handle, tint));
@@ -63,7 +53,7 @@ pub fn setup_render_target(
         Camera2d,
         Camera {
             order: 0,
-            clear_color: Color::NONE.into(),
+            clear_color: Color::srgb(0.0, 0.0, 0.0).into(),
             ..default()
         },
         UpscaleCamera,

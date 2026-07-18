@@ -12,7 +12,17 @@ You wake up chained to a bed in the basement of an experimental laboratory.
 Solve escape-room puzzles across floors, avoid detection by scientists
 and security systems, and ascend to the surface.
 
-Press **Space** in the current demo to cycle floor palettes (Red → Green → Teal → Black).
+## Current build (TODO-005)
+
+Flow: **MainMenu → InGame → ElevatorTransition → Ending** (floors 1–10 via `CurrentFloor`).
+
+- **Enter** — New game (menu) / skip elevator / return from ending
+- **WASD** — Move (Shift sprint)
+- **Mouse** / **Q-E** / arrows — Look
+- **Tab** — Toggle cursor grab
+- **L** — Call elevator (advance floor; floor 10 → ending)
+- **Esc** — Quit (main menu) / back to menu (ending)
+- **Space** — Cycle CRT palette (debug)
 
 ## Levels
 

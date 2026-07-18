@@ -37,23 +37,26 @@ subsequent sprints build on.
   - **Dependencies:** TODO-001 (workspace must exist)
   - **Notes:** Render the game to a 320×200 `Image` target, then upscale with nearest-neighbor to the window resolution via a fullscreen quad + custom `Material` shader. Add a palette-swap uniform so floors can shift colors (red → green → teal → black per TODO-006). No CRT curvature/scanlines yet — that's TODO-034.
 
-- [ ] **[MASTER]** **[TODO-003]** Implement custom software raycaster (Doom-style) or `bevy_voxel` hybrid. Support billboard sprites for enemies and hand. (1 week)
+- [x] **[MASTER]** **[TODO-003]** Implement custom software raycaster (Doom-style) or `bevy_voxel` hybrid. Support billboard sprites for enemies and hand. (1 week)
   - **Branch:** `todo-003`
   - **Assignee:** Master Dev
   - **Dependencies:** TODO-001, TODO-002 (render target must exist)
   - **Notes:** This is the core engine piece. DDA raycasting against a 2D grid map, textured walls, billboard sprites for enemies/items/hand. The current `src/level/loader.rs` spawns 3D `PbrBundle` walls — this replaces that entirely with a grid-based map the raycaster reads. Consider a `MapGrid` resource (2D array of wall texels) that the floor loader (TODO-007) populates.
+  - **Completed:** CPU DDA raycaster writes textured walls + floor/ceiling into the 320×200 framebuffer; `MapGrid`, `RayCamera`, procedural `TextureSet`, world `Billboard`s, and `HandOverlay`. Test map with temporary WASD/mouse controls (gameplay controller is TODO-004).
 
-- [ ] **[TODO-004]** Basic first-person controller (WASD + mouse look, Doom-style movement/friction). (3 days)
+- [x] **[TODO-004]** Basic first-person controller (WASD + mouse look, Doom-style movement/friction). (3 days)
   - **Branch:** `todo-004`
   - **Assignee:** Dev
   - **Dependencies:** TODO-003 (raycaster defines collision against the map grid)
   - **Notes:** The existing `src/player/controller.rs` has a kinematic 3D controller with yaw/pitch and crouch. Adapt to 2D-plane movement (x/z in world = x/y on the map grid) with Doom-style acceleration/friction. Collision is grid-cell based (wall cells block movement), not physics-engine-based. Crouch may be dropped or repurposed. Mouse look only affects yaw for the raycaster; pitch is used for the hand sprite / interaction reticle only.
+  - **Completed:** `gameplay::player` owns Doom-style accel/friction motor, grid collision via `MapGrid`, yaw→`RayCamera`, pitch→`HandOverlay`. Esc toggles cursor grab. Engine demo controls removed.
 
-- [ ] **[TODO-005]** Create main game state enum (`MainMenu`, `InGame`, `ElevatorTransition`, `Ending`). (2 days)
+- [x] **[TODO-005]** Create main game state enum (`MainMenu`, `InGame`, `ElevatorTransition`, `Ending`). (2 days)
   - **Branch:** `todo-005`
   - **Assignee:** Dev
   - **Dependencies:** TODO-001 (workspace)
   - **Notes:** The existing `src/game/states.rs` has `GameState` with `Level1..7`, `Paused`, `GameOver`, `Victory`. Replace with the new flow: `MainMenu`, `InGame`, `ElevatorTransition`, `Ending`. The 10-floor progression lives inside `InGame` via a `CurrentFloor` resource (u8 1..=10), not as separate states. `ElevatorTransition` handles the load/save + visual/audio shift between floors. `Ending` branches into the moral-choice endings (TODO-029). Update `src/game/conditions.rs` and `src/game/plugin.rs` accordingly.
+  - **Completed:** `GameState` + `CurrentFloor` + `EndingKind` + elevator timer; menu/elevator/ending UI overlays; player systems gated to `InGame`; palette shifts per floor cluster.
 
 ---
 
@@ -72,9 +75,9 @@ TODO-001 ──┬──> TODO-002 ──> TODO-003 ──> TODO-004
 
 ## Acceptance Criteria
 
-- [ ] `cargo build` succeeds on Bevy 0.15+ with workspace structure.
-- [ ] A 320×200 render target is visible, upscaled to the window.
-- [ ] Raycaster renders a textured wall grid from a test map.
-- [ ] Player can move (WASD) and look (mouse) with grid-based collision.
-- [ ] Game state cycles: `MainMenu` → `InGame` → `ElevatorTransition` → `Ending`.
+- [x] `cargo build` succeeds on Bevy 0.15+ with workspace structure.
+- [x] A 320×200 render target is visible, upscaled to the window.
+- [x] Raycaster renders a textured wall grid from a test map.
+- [x] Player can move (WASD) and look (mouse) with grid-based collision.
+- [x] Game state cycles: `MainMenu` → `InGame` → `ElevatorTransition` → `Ending`.
 - [ ] No 3D `PbrBundle`/`Camera3d` remains in the gameplay path (raycaster replaces it).

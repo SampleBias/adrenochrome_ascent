@@ -1,24 +1,37 @@
 //! Adrenochrome Ascent — Engine crate.
 //!
-//! Contains the raycaster rendering pipeline, 320×200 render target,
-//! CRT shader, and billboard sprite system. Visual style targets the
-//! lo-fi horror references in `assets/images/style_reference/`.
+//! Software Doom-style raycaster → 320×200 CPU framebuffer → CRT upscale.
+//! Visual style targets `assets/images/style_reference/`.
 
 use bevy::{asset::embedded_asset, prelude::*};
 
+pub mod billboard;
 pub mod crt_material;
 pub mod demo;
+pub mod map;
 pub mod palette;
+pub mod ray_camera;
+pub mod raycaster;
 pub mod render_target;
+pub mod textures;
 
+pub use billboard::{Billboard, HandOverlay};
 pub use crt_material::{
-    CrtFullscreenQuad, CrtMaterial, LowResSceneCamera, UpscaleCamera, update_crt_palette,
-    update_crt_time,
+    CrtFullscreenQuad, CrtMaterial, UpscaleCamera, update_crt_palette, update_crt_time,
 };
+pub use map::MapGrid;
 pub use palette::{ActivePalette, Palette, RENDER_HEIGHT, RENDER_WIDTH};
+pub use ray_camera::RayCamera;
 pub use render_target::{LowResTarget, fit_fullscreen_quad, setup_render_target};
+pub use textures::TextureSet;
 
-/// Engine plugin: sets up the low-res CRT rendering pipeline.
+/// Ordered raycaster stages so gameplay systems can run before the frame draw.
+#[derive(SystemSet, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum RaycasterSystems {
+    Render,
+}
+
+/// Engine plugin: CRT pipeline + software raycaster.
 pub struct EnginePlugin;
 
 impl Plugin for EnginePlugin {
@@ -26,17 +39,22 @@ impl Plugin for EnginePlugin {
         embedded_asset!(app, "shaders/crt_upscale.wgsl");
 
         app.add_plugins(bevy::sprite_render::Material2dPlugin::<CrtMaterial>::default())
-            .add_systems(Startup, setup_render_target)
+            .init_resource::<raycaster::DepthBuffer>()
+            .insert_resource(TextureSet::procedural())
+            .configure_sets(Update, RaycasterSystems::Render)
+            .add_systems(
+                Startup,
+                (setup_render_target, demo::setup_test_map).chain(),
+            )
             .add_systems(
                 Update,
                 (
+                    demo::demo_cycle_palette,
+                    raycaster::render_frame.in_set(RaycasterSystems::Render),
                     fit_fullscreen_quad,
                     update_crt_palette,
                     update_crt_time,
-                    demo::demo_cycle_palette,
                 ),
-            )
-            // Horror hallway mockup until the raycaster (TODO-003) lands.
-            .add_systems(Startup, demo::setup_demo_content);
+            );
     }
 }
