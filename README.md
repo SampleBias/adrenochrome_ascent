@@ -1,12 +1,18 @@
 # Adrenochrome Ascent
 
-A first-person escape-room horror puzzle game built with [Bevy](https://bevyengine.org).
+A first-person lo-fi horror game built with [Bevy](https://bevyengine.org).
+Renders at **320×200** with a CRT upscale (scanlines, vignette, dither, palette grades).
+
+Style references live in [`assets/images/style_reference/`](assets/images/style_reference/) —
+blood-red halls, toxic green lobbies, liminal teal corridors, neon player hand.
 
 ## Premise
 
 You wake up chained to a bed in the basement of an experimental laboratory.
-Solve escape-room puzzles across **7 levels**, avoid detection by scientists
+Solve escape-room puzzles across floors, avoid detection by scientists
 and security systems, and ascend to the surface.
+
+Press **Space** in the current demo to cycle floor palettes (Red → Green → Teal → Black).
 
 ## Levels
 
