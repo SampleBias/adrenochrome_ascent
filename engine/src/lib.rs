@@ -22,6 +22,7 @@ pub use crt_material::{
 pub use map::MapGrid;
 pub use palette::{ActivePalette, Palette, RENDER_HEIGHT, RENDER_WIDTH};
 pub use ray_camera::RayCamera;
+pub use raycaster::cast_ray;
 pub use render_target::{LowResTarget, fit_fullscreen_quad, setup_render_target};
 pub use textures::TextureSet;
 
@@ -41,11 +42,11 @@ impl Plugin for EnginePlugin {
         app.add_plugins(bevy::sprite_render::Material2dPlugin::<CrtMaterial>::default())
             .init_resource::<raycaster::DepthBuffer>()
             .insert_resource(TextureSet::procedural())
+            // Defaults until gameplay floor loader replaces them.
+            .insert_resource(MapGrid::from_rows(&["###", "#.#", "###"]))
+            .insert_resource(RayCamera::default())
             .configure_sets(Update, RaycasterSystems::Render)
-            .add_systems(
-                Startup,
-                (setup_render_target, demo::setup_test_map).chain(),
-            )
+            .add_systems(Startup, setup_render_target)
             .add_systems(
                 Update,
                 (

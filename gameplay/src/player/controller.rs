@@ -8,9 +8,11 @@ use bevy::input::mouse::AccumulatedMouseMotion;
 use bevy::prelude::*;
 use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
 
-use adrenochrome_engine::{HandOverlay, MapGrid, RayCamera};
+use adrenochrome_engine::{MapGrid, RayCamera};
 
 use super::constants::*;
+use super::vitals::{Armor, Health, Inventory};
+use super::weapons::WeaponLoadout;
 
 /// Marker for the player entity.
 #[derive(Component, Debug, Clone, Copy)]
@@ -53,6 +55,10 @@ pub fn spawn_player(mut commands: Commands, camera: Res<RayCamera>) {
         Name::new("Player"),
         Player,
         PlayerMotor::from_camera(&camera),
+        Health::default(),
+        Armor::default(),
+        Inventory::default(),
+        WeaponLoadout::default(),
     ));
 }
 
@@ -214,23 +220,6 @@ fn accelerate(velocity: &mut Vec2, wish_dir: Vec2, wish_speed: f32, accel: f32, 
     }
     let accel_speed = (accel * dt * wish_speed).min(add_speed);
     *velocity += wish_dir * accel_speed;
-}
-
-/// Nudge the hand viewmodel from look pitch (looking down raises the hand slightly).
-pub fn apply_hand_pitch(
-    player: Query<&PlayerMotor, With<Player>>,
-    mut hands: Query<&mut HandOverlay>,
-) {
-    let Ok(motor) = player.single() else {
-        return;
-    };
-    for mut hand in &mut hands {
-        // pitch > 0 = looking down (mouse delta.y positive).
-        let pitch_norm = (motor.pitch / PITCH_MAX).clamp(-1.0, 1.0);
-        hand.anchor.x = HAND_ANCHOR.0 + pitch_norm * 0.02;
-        hand.anchor.y = HAND_ANCHOR.1 - pitch_norm * 0.06;
-        hand.scale = HAND_SCALE * (1.0 + pitch_norm * 0.04);
-    }
 }
 
 #[cfg(test)]

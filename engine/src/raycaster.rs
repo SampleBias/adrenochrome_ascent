@@ -165,7 +165,7 @@ pub fn render_frame(
 }
 
 /// DDA cast. Returns (perp_distance, texture_id, wall_x 0..1, side 0=x 1=y).
-fn cast_ray(map: &MapGrid, pos: Vec2, ray_dir: Vec2) -> (f32, u8, f32, i32) {
+pub fn cast_ray(map: &MapGrid, pos: Vec2, ray_dir: Vec2) -> (f32, u8, f32, i32) {
     let mut map_x = pos.x.floor() as i32;
     let mut map_y = pos.y.floor() as i32;
 
@@ -269,9 +269,15 @@ fn draw_billboard(
             let d = y * 256 - h as i32 * 128 + sprite_h * 128;
             let tex_y = (((d * TEX_SIZE as i32) / sprite_h) / 256)
                 .clamp(0, TEX_SIZE as i32 - 1) as usize;
-            let px = textures.sprite(sprite.texture_id, tex_x as usize, tex_y);
+            let mut px = textures.sprite(sprite.texture_id, tex_x as usize, tex_y);
             if px[3] < 16 {
                 continue;
+            }
+            if sprite.flash > 0.01 {
+                let f = sprite.flash.clamp(0.0, 1.0);
+                px[0] = ((px[0] as f32) * (1.0 - f) + 255.0 * f).min(255.0) as u8;
+                px[1] = ((px[1] as f32) * (1.0 - f) + 180.0 * f).min(255.0) as u8;
+                px[2] = ((px[2] as f32) * (1.0 - f) + 180.0 * f).min(255.0) as u8;
             }
             let shaded = apply_fog(px, transform_y);
             // Alpha blend over destination.
@@ -321,12 +327,36 @@ fn draw_hand(
             if px[3] < 16 {
                 continue;
             }
-            // Boost magenta outline glow.
+            // Boost magenta / energy outline glow.
             if px[0] > 180 && px[2] > 120 {
                 px[0] = ((px[0] as f32) * pulse).min(255.0) as u8;
                 px[2] = ((px[2] as f32) * pulse).min(255.0) as u8;
             }
             put_bgra(buf, w, x as usize, y as usize, px[0], px[1], px[2], 255);
+        }
+    }
+
+    // Muzzle flash burst near the top of the viewmodel.
+    if hand.muzzle > 0.01 {
+        let flash_r = (size as f32 * 0.18 * hand.muzzle) as i32;
+        let fx = cx - size / 5;
+        let fy = cy - size / 3;
+        for dy in -flash_r..=flash_r {
+            for dx in -flash_r..=flash_r {
+                if dx * dx + dy * dy > flash_r * flash_r {
+                    continue;
+                }
+                let x = fx + dx;
+                let y = fy + dy;
+                if x < 0 || y < 0 || x >= w as i32 || y >= h as i32 {
+                    continue;
+                }
+                let t = 1.0 - ((dx * dx + dy * dy) as f32) / (flash_r * flash_r) as f32;
+                let r = (255.0 * t * hand.muzzle) as u8;
+                let g = (200.0 * t * hand.muzzle) as u8;
+                let b = (80.0 * t * hand.muzzle) as u8;
+                put_bgra(buf, w, x as usize, y as usize, r, g, b, 255);
+            }
         }
     }
 }

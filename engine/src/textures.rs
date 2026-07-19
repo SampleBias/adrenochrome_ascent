@@ -28,9 +28,40 @@ impl TextureSet {
             ],
             sprites: vec![
                 gen_enemy_silhouette(),               // 0 enemy
-                gen_hand(),                           // 1 player hand
+                gen_hand(),                           // 1 player hand (unarmed)
                 gen_wisp(),                           // 2 cyan spectral wisp
                 gen_item_keycard(),                   // 3 pickup placeholder
+                gen_weapon_hand(WeaponArt::Pistol, false), // 4
+                gen_weapon_hand(WeaponArt::Pistol, true),  // 5 fire
+                gen_weapon_hand(WeaponArt::Shotgun, false), // 6
+                gen_weapon_hand(WeaponArt::Shotgun, true),  // 7 fire
+                gen_weapon_hand(WeaponArt::Plasma, false),  // 8
+                gen_weapon_hand(WeaponArt::Plasma, true),   // 9 fire
+                gen_weapon_hand(WeaponArt::Injector, false), // 10
+                gen_weapon_hand(WeaponArt::Injector, true),  // 11 fire
+                // Sprint 4 Mob archetypes (idle / attack)
+                gen_faction_enemy(EnemyArt::Thug, false),      // 12
+                gen_faction_enemy(EnemyArt::Thug, true),       // 13
+                gen_faction_enemy(EnemyArt::Heavy, false),     // 14
+                gen_faction_enemy(EnemyArt::Heavy, true),      // 15
+                gen_faction_enemy(EnemyArt::Zed, false),       // 16
+                gen_faction_enemy(EnemyArt::Zed, true),        // 17
+                gen_faction_enemy(EnemyArt::Lieutenant, false), // 18
+                gen_faction_enemy(EnemyArt::Lieutenant, true),  // 19 cigar flare
+                gen_loot_ammo(),                               // 20
+                gen_loot_medkit(),                             // 21
+                // Sprint 5 Security archetypes (idle / attack)
+                gen_faction_enemy(EnemyArt::RiotGuard, false),     // 22
+                gen_faction_enemy(EnemyArt::RiotGuard, true),      // 23
+                gen_faction_enemy(EnemyArt::PatrolSecurity, false), // 24
+                gen_faction_enemy(EnemyArt::PatrolSecurity, true),  // 25
+                gen_faction_enemy(EnemyArt::HazardTech, false),    // 26
+                gen_faction_enemy(EnemyArt::HazardTech, true),     // 27
+                gen_faction_enemy(EnemyArt::Warden, false),        // 28
+                gen_faction_enemy(EnemyArt::Warden, true),         // 29
+                gen_crate_sprite(),                               // 30
+                gen_turret_sprite(false),                          // 31
+                gen_turret_sprite(true),                           // 32 firing
             ],
         }
     }
@@ -238,6 +269,231 @@ fn gen_item_keycard() -> Vec<[u8; 4]> {
     fill_rect(&mut buf, 16, 24, 48, 40, [200, 180, 40, 255]);
     fill_rect(&mut buf, 20, 28, 44, 36, [40, 40, 50, 255]);
     fill_rect(&mut buf, 22, 30, 30, 34, [80, 220, 120, 255]);
+    buf
+}
+
+#[derive(Clone, Copy)]
+enum EnemyArt {
+    Thug,
+    Heavy,
+    Zed,
+    Lieutenant,
+    RiotGuard,
+    PatrolSecurity,
+    HazardTech,
+    Warden,
+}
+
+fn gen_faction_enemy(kind: EnemyArt, attack: bool) -> Vec<[u8; 4]> {
+    let mut buf = solid([0, 0, 0, 0]);
+    let (body, shirt, accent) = match kind {
+        EnemyArt::Thug => ([10, 10, 14, 255], [160, 40, 36, 255], [200, 160, 40, 255]),
+        EnemyArt::Heavy => ([8, 10, 18, 255], [40, 48, 70, 255], [120, 130, 150, 255]),
+        EnemyArt::Zed => ([18, 28, 16, 255], [70, 110, 50, 255], [180, 220, 80, 255]),
+        EnemyArt::Lieutenant => ([12, 8, 10, 255], [90, 20, 28, 255], [220, 160, 60, 255]),
+        EnemyArt::RiotGuard => ([14, 16, 22, 255], [50, 70, 90, 255], [80, 200, 220, 255]),
+        EnemyArt::PatrolSecurity => ([12, 14, 20, 255], [40, 90, 60, 255], [220, 200, 60, 255]),
+        EnemyArt::HazardTech => ([16, 18, 14, 255], [60, 100, 40, 255], [240, 160, 40, 255]),
+        EnemyArt::Warden => ([8, 12, 16, 255], [30, 50, 70, 255], [60, 220, 160, 255]),
+    };
+
+    let wide = matches!(
+        kind,
+        EnemyArt::Heavy | EnemyArt::Lieutenant | EnemyArt::RiotGuard | EnemyArt::Warden
+    );
+    let (leg_l, leg_r, torso_x0, torso_x1, head_r) = if wide {
+        (18, 28, 16, 48, 48)
+    } else if matches!(kind, EnemyArt::Zed) {
+        (24, 32, 22, 42, 32)
+    } else {
+        (22, 30, 20, 44, 40)
+    };
+
+    for y in 40..60 {
+        for x in leg_l..(leg_l + 8) {
+            put(&mut buf, x, y, body);
+        }
+        for x in leg_r..(leg_r + 8) {
+            put(&mut buf, x, y, body);
+        }
+    }
+    for y in 18..42 {
+        for x in torso_x0..torso_x1 {
+            put(&mut buf, x, y, shirt);
+        }
+    }
+    for y in 6..18 {
+        for x in 26..38 {
+            let dx = x as isize - 32;
+            let dy = y as isize - 12;
+            if dx * dx + dy * dy < head_r {
+                put(&mut buf, x, y, body);
+            }
+        }
+    }
+
+    // Accent: bat / shield / claws / cigar.
+    match kind {
+        EnemyArt::Thug => {
+            fill_rect(&mut buf, 8, 20, 18, 40, accent);
+            if attack {
+                fill_rect(&mut buf, 4, 14, 14, 28, accent);
+            }
+        }
+        EnemyArt::Heavy => {
+            fill_rect(&mut buf, 14, 22, 50, 38, accent);
+            if attack {
+                fill_rect(&mut buf, 10, 18, 22, 44, [200, 80, 60, 255]);
+            }
+        }
+        EnemyArt::Zed => {
+            fill_rect(&mut buf, 14, 28, 22, 36, accent);
+            fill_rect(&mut buf, 42, 28, 50, 36, accent);
+            if attack {
+                fill_rect(&mut buf, 10, 24, 20, 40, accent);
+                fill_rect(&mut buf, 44, 24, 54, 40, accent);
+            }
+        }
+        EnemyArt::Lieutenant => {
+            // Lit cigar tip (weakpoint cue).
+            fill_rect(&mut buf, 40, 14, 50, 18, accent);
+            let tip = if attack {
+                [255, 220, 80, 255]
+            } else {
+                [255, 120, 40, 255]
+            };
+            fill_rect(&mut buf, 48, 12, 54, 20, tip);
+        }
+        EnemyArt::RiotGuard => {
+            // Frontal riot shield.
+            fill_rect(&mut buf, 8, 16, 22, 48, accent);
+            fill_rect(&mut buf, 10, 18, 20, 46, [30, 40, 50, 255]);
+            if attack {
+                fill_rect(&mut buf, 6, 14, 24, 50, [120, 240, 255, 255]);
+            }
+        }
+        EnemyArt::PatrolSecurity => {
+            fill_rect(&mut buf, 44, 22, 52, 34, accent); // radio pack
+            if attack {
+                fill_rect(&mut buf, 46, 18, 54, 28, [255, 220, 80, 255]);
+            }
+        }
+        EnemyArt::HazardTech => {
+            fill_rect(&mut buf, 40, 30, 54, 42, accent); // toolbox
+            if attack {
+                fill_rect(&mut buf, 42, 20, 52, 30, [255, 180, 40, 255]);
+            }
+        }
+        EnemyArt::Warden => {
+            fill_rect(&mut buf, 18, 10, 46, 18, accent); // visor
+            if attack {
+                fill_rect(&mut buf, 20, 10, 44, 18, [80, 255, 180, 255]);
+            }
+        }
+    }
+    buf
+}
+
+fn gen_crate_sprite() -> Vec<[u8; 4]> {
+    let mut buf = solid([0, 0, 0, 0]);
+    fill_rect(&mut buf, 12, 16, 52, 56, [120, 80, 40, 255]);
+    fill_rect(&mut buf, 16, 20, 48, 52, [90, 60, 30, 255]);
+    fill_rect(&mut buf, 12, 34, 52, 38, [60, 40, 20, 255]);
+    fill_rect(&mut buf, 30, 16, 34, 56, [60, 40, 20, 255]);
+    buf
+}
+
+fn gen_turret_sprite(firing: bool) -> Vec<[u8; 4]> {
+    let mut buf = solid([0, 0, 0, 0]);
+    fill_rect(&mut buf, 20, 36, 44, 56, [40, 48, 56, 255]);
+    fill_rect(&mut buf, 26, 18, 38, 40, [70, 80, 90, 255]);
+    fill_rect(&mut buf, 28, 8, 36, 22, [100, 110, 120, 255]);
+    if firing {
+        fill_rect(&mut buf, 30, 2, 34, 12, [255, 200, 80, 255]);
+    }
+    buf
+}
+
+fn gen_loot_ammo() -> Vec<[u8; 4]> {
+    let mut buf = solid([0, 0, 0, 0]);
+    fill_rect(&mut buf, 18, 28, 46, 48, [180, 150, 60, 255]);
+    fill_rect(&mut buf, 22, 32, 42, 44, [40, 40, 30, 255]);
+    fill_rect(&mut buf, 26, 22, 30, 32, [200, 180, 80, 255]);
+    fill_rect(&mut buf, 34, 22, 38, 32, [200, 180, 80, 255]);
+    buf
+}
+
+fn gen_loot_medkit() -> Vec<[u8; 4]> {
+    let mut buf = solid([0, 0, 0, 0]);
+    fill_rect(&mut buf, 18, 24, 46, 48, [200, 40, 50, 255]);
+    fill_rect(&mut buf, 22, 28, 42, 44, [240, 240, 240, 255]);
+    fill_rect(&mut buf, 30, 30, 34, 42, [200, 40, 50, 255]);
+    fill_rect(&mut buf, 26, 34, 38, 38, [200, 40, 50, 255]);
+    buf
+}
+
+#[derive(Clone, Copy)]
+enum WeaponArt {
+    Pistol,
+    Shotgun,
+    Plasma,
+    Injector,
+}
+
+/// First-person weapon viewmodel (hand + gun), fire frame brightens the muzzle.
+fn gen_weapon_hand(kind: WeaponArt, firing: bool) -> Vec<[u8; 4]> {
+    let mut buf = gen_hand();
+    let metal = [90, 90, 100, 255];
+    let dark = [30, 28, 36, 255];
+    let accent = match kind {
+        WeaponArt::Pistol => [180, 160, 80, 255],
+        WeaponArt::Shotgun => [120, 80, 50, 255],
+        WeaponArt::Plasma => [40, 200, 220, 255],
+        WeaponArt::Injector => [200, 40, 90, 255],
+    };
+
+    // Grip / receiver over the palm.
+    fill_rect(&mut buf, 24, 34, 40, 52, dark);
+    fill_rect(&mut buf, 26, 36, 38, 50, metal);
+
+    match kind {
+        WeaponArt::Pistol => {
+            fill_rect(&mut buf, 18, 22, 46, 34, dark);
+            fill_rect(&mut buf, 20, 24, 44, 32, metal);
+            fill_rect(&mut buf, 12, 26, 22, 30, accent);
+        }
+        WeaponArt::Shotgun => {
+            fill_rect(&mut buf, 10, 24, 50, 36, dark);
+            fill_rect(&mut buf, 12, 26, 48, 34, metal);
+            fill_rect(&mut buf, 8, 28, 14, 32, accent);
+            fill_rect(&mut buf, 28, 36, 36, 48, dark);
+        }
+        WeaponArt::Plasma => {
+            fill_rect(&mut buf, 14, 20, 48, 34, dark);
+            fill_rect(&mut buf, 16, 22, 46, 32, [50, 70, 90, 255]);
+            fill_rect(&mut buf, 10, 24, 18, 30, accent);
+            // Cell glow strip.
+            fill_rect(&mut buf, 30, 26, 42, 28, accent);
+        }
+        WeaponArt::Injector => {
+            fill_rect(&mut buf, 22, 16, 42, 36, dark);
+            fill_rect(&mut buf, 24, 18, 40, 34, [60, 20, 40, 255]);
+            fill_rect(&mut buf, 28, 10, 36, 20, accent);
+            // Syringe tip.
+            fill_rect(&mut buf, 30, 4, 34, 12, [200, 200, 210, 255]);
+        }
+    }
+
+    if firing {
+        let flash = match kind {
+            WeaponArt::Plasma => [120, 240, 255, 255],
+            WeaponArt::Injector => [255, 80, 140, 255],
+            _ => [255, 220, 120, 255],
+        };
+        fill_rect(&mut buf, 4, 20, 16, 34, flash);
+        fill_rect(&mut buf, 6, 18, 14, 36, [255, 255, 200, 255]);
+    }
+
     buf
 }
 

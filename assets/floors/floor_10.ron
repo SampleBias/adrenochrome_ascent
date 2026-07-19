@@ -1,0 +1,65 @@
+// Floor 10 — The Surface
+FloorDef(
+  number: 10,
+  name: "The Surface",
+  subtitle: "Roof — Escape",
+  cluster: Surface,
+  palette: Black,
+  ambient_audio: "ambient/night_wind",
+  intro_text: "Cold air. Convoy lights. Take the last elevator — or vanish.",
+  player_spawn: (10.5, 12.5),
+  player_yaw: -1.5707963267948966,
+  rows: [
+    "####################",
+    "#..................#",
+    "#..................#",
+    "#....##########....#",
+    "#....#........#....#",
+    "#....#...DD...#....#",
+    "#....#........#....#",
+    "#....##########....#",
+    "#..................#",
+    "#..................#",
+    "#..MM..........MM..#",
+    "#..................#",
+    "#..................#",
+    "#..................#",
+    "####################",
+  ],
+  entities: [
+    EntityDef(
+      pos: (10.5, 4.0),
+      kind: Billboard(texture_id: 0, scale: 0.9),
+    ),
+    EntityDef(
+      pos: (8.5, 10.5),
+      kind: Interactable(
+        prompt: "Signal convoy (release)",
+        require: None,
+        action: ReleaseSubjects,
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 5.5),
+      kind: Interactable(
+        prompt: "Force surface door",
+        require: None,
+        action: OpenDoor(cell:(10,5), flag:Some("surface_open")),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 13.2),
+      kind: Interactable(
+        prompt: "Final elevator",
+        require: Some("surface_open"),
+        action: CallElevator,
+        texture_id: None,
+        scale: 0.6,
+      ),
+    ),
+  ],
+)

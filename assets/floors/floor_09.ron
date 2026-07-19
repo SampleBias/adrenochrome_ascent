@@ -1,0 +1,65 @@
+// Floor 09 — Penthouse Access
+FloorDef(
+  number: 9,
+  name: "Penthouse Access",
+  subtitle: "Surface Approach — Sky Lobby",
+  cluster: Surface,
+  palette: Teal,
+  ambient_audio: "ambient/wind_glass",
+  intro_text: "Glass and night. One more lock before the roof.",
+  player_spawn: (10.5, 12.5),
+  player_yaw: -1.5707963267948966,
+  rows: [
+    "####################",
+    "#..................#",
+    "#..##############..#",
+    "#..#............#..#",
+    "#..#....DD......#..#",
+    "#..#............#..#",
+    "#..######..######..#",
+    "#..................#",
+    "#..................#",
+    "#..MM..........MM..#",
+    "#..................#",
+    "#.####........####.#",
+    "#..................#",
+    "#..................#",
+    "####################",
+  ],
+  entities: [
+    EntityDef(
+      pos: (10.5, 8.5),
+      kind: Billboard(texture_id: 2, scale: 0.65),
+    ),
+    EntityDef(
+      pos: (10.5, 9.5),
+      kind: Interactable(
+        prompt: "Unlock roof uplink",
+        require: None,
+        action: SetFlag("elevator_unlocked"),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 4.5),
+      kind: Interactable(
+        prompt: "Open penthouse door",
+        require: Some("elevator_unlocked"),
+        action: OpenDoor(cell:(10,4), flag:Some("pent_open")),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 13.2),
+      kind: Interactable(
+        prompt: "Call elevator",
+        require: Some("pent_open"),
+        action: CallElevator,
+        texture_id: None,
+        scale: 0.6,
+      ),
+    ),
+  ],
+)

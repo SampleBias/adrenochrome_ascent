@@ -12,16 +12,18 @@ You wake up chained to a bed in the basement of an experimental laboratory.
 Solve escape-room puzzles across floors, avoid detection by scientists
 and security systems, and ascend to the surface.
 
-## Current build (TODO-005)
+## Current build (Sprint 2)
 
-Flow: **MainMenu → InGame → ElevatorTransition → Ending** (floors 1–10 via `CurrentFloor`).
+RON floors in `assets/floors/`, loaded into the raycaster on each `InGame` enter.
+Elevator rides autosave to `saves/slot_XX.ron`.
 
-- **Enter** — New game (menu) / skip elevator / return from ending
+- **Enter** — New game / skip elevator / leave ending
 - **WASD** — Move (Shift sprint)
-- **Mouse** / **Q-E** / arrows — Look
-- **Tab** — Toggle cursor grab
-- **L** — Call elevator (advance floor; floor 10 → ending)
-- **Esc** — Quit (main menu) / back to menu (ending)
+- **Mouse** / **Q-E** — Look
+- **E** — Interact (doors, terminals, valves, elevator)
+- **L** — Force elevator (debug)
+- **Tab** — Toggle cursor
+- **Esc** — Quit / back to menu
 - **Space** — Cycle CRT palette (debug)
 
 ## Levels
@@ -39,11 +41,14 @@ Flow: **MainMenu → InGame → ElevatorTransition → Ending** (floors 1–10 v
 ## Controls
 
 - **WASD** — Move
-- **Mouse** — Look
-- **E** — Interact
+- **Mouse** / **Q–E** — Look (Tab toggles cursor grab)
 - **Shift** — Sprint
-- **C** — Crouch
-- **Esc** — Pause
+- **E** — Interact
+- **LMB** / **Ctrl** — Fire
+- **1–4** — Select weapon (pistol / shotgun / plasma / injector)
+- **F5 / F6 / F7** — Debug: grant shotgun / plasma / injector + ammo
+- **L** — Force elevator (debug)
+- **Enter** — Menu / skip elevator / leave ending
 
 ## Run
 

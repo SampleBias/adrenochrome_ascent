@@ -8,3 +8,6 @@ description = "ECS gameplay systems, player, enemy, puzzle for Adrenochrome Asce
 [dependencies]
 bevy.workspace = true
 adrenochrome_engine = { path = "../engine" }
+adrenochrome_content = { path = "../content" }
+serde.workspace = true
+ron.workspace = true

@@ -1,0 +1,91 @@
+// Floor 02 — The Corridor
+FloorDef(
+  number: 2,
+  name: "The Corridor",
+  subtitle: "Basement — Hallway B",
+  cluster: Human,
+  palette: Red,
+  ambient_audio: "ambient/corridor_drip",
+  intro_text: "Mob patrol. A Zed thrashes the far hall. Power the corridor lock.",
+  player_spawn: (10.5, 12.5),
+  player_yaw: -1.5707963267948966,
+  rows: [
+    "####################",
+    "#..................#",
+    "#.####....####.....#",
+    "#.#..............#.#",
+    "#.#....DD........#.#",
+    "#.#..............#.#",
+    "#.####....####.....#",
+    "#..................#",
+    "#..MM..........55..#",
+    "#..................#",
+    "#.####........####.#",
+    "#..................#",
+    "#..................#",
+    "#..................#",
+    "####################",
+  ],
+  entities: [
+    EntityDef(
+      pos: (6.5, 8.5),
+      kind: Enemy(
+        faction: Mob,
+        archetype: Thug,
+        scale: 0.9,
+        waypoints: [(4.5, 8.5), (8.5, 8.5), (8.5, 11.5), (4.5, 11.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
+      pos: (14.5, 3.5),
+      kind: Enemy(
+        faction: Mob,
+        archetype: Zed,
+        scale: 0.85,
+        waypoints: [(12.5, 3.5), (16.5, 3.5), (16.5, 5.5), (12.5, 5.5)],
+        yaw: 3.14159,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 5.5),
+      kind: Enemy(
+        faction: Mob,
+        archetype: Heavy,
+        scale: 1.1,
+        waypoints: [(9.5, 5.5), (11.5, 5.5)],
+        yaw: -1.5708,
+      ),
+    ),
+    EntityDef(
+      pos: (8.5, 8.5),
+      kind: Interactable(
+        prompt: "Flip breaker",
+        require: None,
+        action: SetFlag("power_restored"),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 4.5),
+      kind: Interactable(
+        prompt: "Open corridor gate",
+        require: Some("power_restored"),
+        action: OpenDoor(cell:(10,4), flag:Some("gate_open")),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 13.2),
+      kind: Interactable(
+        prompt: "Call elevator",
+        require: Some("gate_open"),
+        action: CallElevator,
+        texture_id: None,
+        scale: 0.6,
+      ),
+    ),
+  ],
+)

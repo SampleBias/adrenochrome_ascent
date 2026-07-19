@@ -10,6 +10,8 @@ description = "A retro first-person horror-action game built in Rust + Bevy"
 
 [workspace.dependencies]
 bevy = "0.19"
+serde = { version = "1", features = ["derive"] }
+ron = "0.8"
 
 # Enable dynamic linking for faster dev iteration across all workspace members.
 [profile.dev]

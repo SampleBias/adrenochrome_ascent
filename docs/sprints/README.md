@@ -8,11 +8,11 @@ dependencies, parallelization notes, and mapping to the existing codebase scaffo
 
 | # | Sprint | File | Tasks | Status |
 |---|--------|------|-------|--------|
-| 1 | Project Bootstrap & Core Engine Foundation | [sprint-01-project-bootstrap-core-engine-foundation.md](sprint-01-project-bootstrap-core-engine-foundation.md) | TODO-001 → 005 | Not started |
-| 2 | Map & Floor Loading System | [sprint-02-map-floor-loading-system.md](sprint-02-map-floor-loading-system.md) | TODO-006 → 010 | Not started |
-| 3 | Player Systems & Inventory | [sprint-03-player-systems-inventory.md](sprint-03-player-systems-inventory.md) | TODO-011 → 014 | Not started |
-| 4 | Enemy Factions & AI (Lieutenant Mob Tier) | [sprint-04-enemy-factions-ai-lieutenant-mob-tier.md](sprint-04-enemy-factions-ai-lieutenant-mob-tier.md) | TODO-015 → 019 | Not started |
-| 5 | Mid-Game Factions & Hazards (Warden Tier) | [sprint-05-mid-game-factions-hazards-warden-tier.md](sprint-05-mid-game-factions-hazards-warden-tier.md) | TODO-020 → 023 | Not started |
+| 1 | Project Bootstrap & Core Engine Foundation | [sprint-01-project-bootstrap-core-engine-foundation.md](sprint-01-project-bootstrap-core-engine-foundation.md) | TODO-001 → 005 | Complete |
+| 2 | Map & Floor Loading System | [sprint-02-map-floor-loading-system.md](sprint-02-map-floor-loading-system.md) | TODO-006 → 010 | Complete |
+| 3 | Player Systems & Inventory | [sprint-03-player-systems-inventory.md](sprint-03-player-systems-inventory.md) | TODO-011 → 014 | Complete |
+| 4 | Enemy Factions & AI (Lieutenant Mob Tier) | [sprint-04-enemy-factions-ai-lieutenant-mob-tier.md](sprint-04-enemy-factions-ai-lieutenant-mob-tier.md) | TODO-015 → 019 | Complete |
+| 5 | Mid-Game Factions & Hazards (Warden Tier) | [sprint-05-mid-game-factions-hazards-warden-tier.md](sprint-05-mid-game-factions-hazards-warden-tier.md) | TODO-020 → 023 | Complete |
 | 6 | Late-Game Factions & Mini-Games (Scientist Tier) | [sprint-06-late-game-factions-minigames-scientist-tier.md](sprint-06-late-game-factions-minigames-scientist-tier.md) | TODO-024 → 027 | Not started |
 | 7 | Executive Tier, Progression & Moral Choice | [sprint-07-executive-tier-progression-moral-choice.md](sprint-07-executive-tier-progression-moral-choice.md) | TODO-028 → 031 | Not started |
 | 8 | Audio, UI & Polish | [sprint-08-audio-ui-polish.md](sprint-08-audio-ui-polish.md) | TODO-032 → 034 | Not started |

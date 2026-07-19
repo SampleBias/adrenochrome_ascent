@@ -7,7 +7,7 @@ use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
 
 use adrenochrome_engine::{ActivePalette, RayCamera};
 
-use crate::player::{Player, PlayerMotor};
+use crate::player::{Armor, Health, Inventory, Player, PlayerMotor, WeaponLoadout};
 
 use super::floor::{CurrentFloor, EndingKind};
 use super::states::GameState;
@@ -54,6 +54,10 @@ pub fn enter_in_game_spawn_player(
             Name::new("Player"),
             Player,
             PlayerMotor::from_camera(&camera),
+            Health::default(),
+            Armor::default(),
+            Inventory::default(),
+            WeaponLoadout::default(),
         ));
     }
 }

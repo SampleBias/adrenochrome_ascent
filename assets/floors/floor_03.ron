@@ -1,0 +1,91 @@
+// Floor 03 — Flooded Cell Block (Lieutenant)
+FloorDef(
+  number: 3,
+  name: "Flooded Cells",
+  subtitle: "Basement — Cell Block",
+  cluster: Human,
+  palette: Red,
+  ambient_audio: "ambient/flood_cells",
+  intro_text: "The Lieutenant waits in the basin. Shoot the cigar when it flares. Water rises.",
+  player_spawn: (2.5, 12.5),
+  player_yaw: 0.0,
+  rows: [
+    "####################",
+    "#..................#",
+    "#..####....####....#",
+    "#..#..........#....#",
+    "#..#....DD....#....#",
+    "#..#..........#....#",
+    "#..####....####....#",
+    "#..................#",
+    "#..................#",
+    "#..................#",
+    "#.####........####.#",
+    "#.#..............#.#",
+    "#.#..............#.#",
+    "#..................#",
+    "####################",
+  ],
+  entities: [
+    EntityDef(
+      pos: (10.5, 7.5),
+      kind: Enemy(
+        faction: Mob,
+        archetype: Lieutenant,
+        scale: 1.25,
+        waypoints: [(9.0, 7.5), (12.0, 7.5), (12.0, 5.5), (9.0, 5.5)],
+        yaw: 3.14159,
+      ),
+    ),
+    EntityDef(
+      pos: (4.5, 8.5),
+      kind: Enemy(
+        faction: Mob,
+        archetype: Thug,
+        scale: 0.9,
+        waypoints: [(3.5, 8.5), (5.5, 8.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
+      pos: (15.5, 8.5),
+      kind: Interactable(
+        prompt: "Take storage keycard",
+        require: None,
+        action: SetFlag("has_keycard"),
+        texture_id: Some(3),
+        scale: 0.45,
+      ),
+    ),
+    EntityDef(
+      pos: (5.5, 3.5),
+      kind: Interactable(
+        prompt: "Restore power",
+        require: None,
+        action: SetFlag("power_restored"),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 4.5),
+      kind: Interactable(
+        prompt: "Open vault gate",
+        require: Some("has_keycard && power_restored"),
+        action: OpenDoor(cell:(10,4), flag:Some("vault_open")),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (2.5, 13.2),
+      kind: Interactable(
+        prompt: "Call elevator",
+        require: Some("vault_open && lieutenant_down"),
+        action: CallElevator,
+        texture_id: None,
+        scale: 0.6,
+      ),
+    ),
+  ],
+)

@@ -18,3 +18,6 @@ Thumbs.db
 # Vybrid session artifacts (local only)
 /.vybrid
 /index.md
+
+# Runtime save slots (keep directory via .gitkeep)
+/saves/*.ron

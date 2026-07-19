@@ -34,42 +34,42 @@ Key Features: Custom raycaster / low-res 320x200 CRT aesthetic, puzzle DSL, enem
 ## Sprint 2: Map & Floor Loading System
 **Owner:** Engine + Content Teams
 
-- [ ] **[TODO-006]** Define floor data structures in RON files (`assets/floors/floor_01.ron` etc.). Include layout, palette (red → green → teal → black), ambient audio cues. (5 days)
-- [ ] **[TODO-007]** Floor loader system using `bevy_scene` bundles + entity spawning per floor cluster (1-3 Human, 4-7 Hybrid, 8-10 Surface). Elevator transitions with visual/audio shifts. (1 week)
-- [ ] **[TODO-008]** Implement global `PuzzleRegistry` resource + basic condition evaluator (e.g. `has_keycard && power_restored`). (4 days)
-- [ ] **[TODO-009]** Basic `Interactable` component for doors, terminals, valves with raycast interaction. (3 days)
-- [ ] **[TODO-010]** Auto-save system on elevator rides (RON serialization, 10 slots). (3 days)
+- [x] **[TODO-006]** Define floor data structures in RON files (`assets/floors/floor_01.ron` etc.). Include layout, palette (red → green → teal → black), ambient audio cues. (5 days)
+- [x] **[TODO-007]** Floor loader system using `bevy_scene` bundles + entity spawning per floor cluster (1-3 Human, 4-7 Hybrid, 8-10 Surface). Elevator transitions with visual/audio shifts. (1 week)
+- [x] **[TODO-008]** Implement global `PuzzleRegistry` resource + basic condition evaluator (e.g. `has_keycard && power_restored`). (4 days)
+- [x] **[TODO-009]** Basic `Interactable` component for doors, terminals, valves with raycast interaction. (3 days)
+- [x] **[TODO-010]** Auto-save system on elevator rides (RON serialization, 10 slots). (3 days)
 
 ---
 
 ## Sprint 3: Player Systems & Inventory
 **Owner:** Gameplay Team
 
-- [ ] **[TODO-011]** Pixel-perfect hand sprite system (idle, interact glow, weapon fire animations). Integrate existing glowing hand assets. (4 days)
-- [ ] **[TODO-012]** Player ECS components: `Health`, `Armor`, `Inventory` (limited slots), pain flash post-process effect. (4 days)
-- [ ] **[TODO-013]** Weapon system: Pistol start (9mm, scarce ammo), shotgun, plasma rifle, Adrenochrome Injector (temp vision + health drain). (1 week)
-- [ ] **[TODO-014]** Combat feedback: screen shake, muzzle flash on raycast hitscan, hit reactions. (3 days)
+- [x] **[TODO-011]** Pixel-perfect hand sprite system (idle, interact glow, weapon fire animations). Integrate existing glowing hand assets. (4 days)
+- [x] **[TODO-012]** Player ECS components: `Health`, `Armor`, `Inventory` (limited slots), pain flash post-process effect. (4 days)
+- [x] **[TODO-013]** Weapon system: Pistol start (9mm, scarce ammo), shotgun, plasma rifle, Adrenochrome Injector (temp vision + health drain). (1 week)
+- [x] **[TODO-014]** Combat feedback: screen shake, muzzle flash on raycast hitscan, hit reactions. (3 days)
 
 ---
 
 ## Sprint 4: Enemy Factions & AI (Lieutenant Mob Tier)
 **Owner:** Gameplay + Art Teams
 
-- [ ] **[TODO-015]** Base `Enemy` bundle + faction enum (Mob, Security, Research, Executive). (3 days)
-- [ ] **[TODO-016]** Lieutenant faction sprites & archetypes: Foot Soldier Thugs, Enforcer Heavies, Zed Prisoners. (1 week)
-- [ ] **[MASTER]** **[TODO-017]** Lieutenant boss fight (Floor 3): wave summoning, cigar weakpoint, flooded cell arena logic. (1 week)
-- [ ] **[TODO-018]** Simple ECS behavior tree / state machine for grunts (Patrol → Chase → Attack). (5 days)
-- [ ] **[TODO-019]** Loot drop system tied to factions (ammo, health, key items). (3 days)
+- [x] **[TODO-015]** Base `Enemy` bundle + faction enum (Mob, Security, Research, Executive). (3 days)
+- [x] **[TODO-016]** Lieutenant faction sprites & archetypes: Foot Soldier Thugs, Enforcer Heavies, Zed Prisoners. (1 week)
+- [x] **[MASTER]** **[TODO-017]** Lieutenant boss fight (Floor 3): wave summoning, cigar weakpoint, flooded cell arena logic. (1 week)
+- [x] **[TODO-018]** Simple ECS behavior tree / state machine for grunts (Patrol → Chase → Attack). (5 days)
+- [x] **[TODO-019]** Loot drop system tied to factions (ammo, health, key items). (3 days)
 
 ---
 
 ## Sprint 5: Mid-Game Factions & Hazards (Warden Tier)
 **Owner:** Gameplay + Engine Teams
 
-- [ ] **[TODO-020]** Warden faction: Riot Guards, Patrol Security, Hazard Techs (shields, turrets, radio AI). (1 week)
-- [ ] **[MASTER]** **[TODO-021]** Warden boss (Floor 7): mid-fight valve puzzles, flood hazards via `WardenOverrides` resource. (1 week)
-- [ ] **[TODO-022]** Environmental hazards: timed valves, grid-based crate/forklift pushing. (5 days)
-- [ ] **[TODO-023]** Faction despawn on boss defeat + global `FactionRegistry` resource. (3 days)
+- [x] **[TODO-020]** Warden faction: Riot Guards, Patrol Security, Hazard Techs (shields, turrets, radio AI). (1 week)
+- [x] **[MASTER]** **[TODO-021]** Warden boss (Floor 7): mid-fight valve puzzles, flood hazards via `WardenOverrides` resource. (1 week)
+- [x] **[TODO-022]** Environmental hazards: timed valves, grid-based crate/forklift pushing. (5 days)
+- [x] **[TODO-023]** Faction despawn on boss defeat + global `FactionRegistry` resource. (3 days)
 
 ---
 

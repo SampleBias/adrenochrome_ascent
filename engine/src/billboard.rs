@@ -15,6 +15,8 @@ pub struct Billboard {
     pub texture_id: usize,
     /// World scale (1.0 ≈ one cell tall).
     pub scale: f32,
+    /// Hit-reaction flash intensity 0..1 (white/red tint).
+    pub flash: f32,
 }
 
 impl Billboard {
@@ -23,6 +25,7 @@ impl Billboard {
             pos,
             texture_id,
             scale,
+            flash: 0.0,
         }
     }
 }
@@ -36,6 +39,8 @@ pub struct HandOverlay {
     pub scale: f32,
     /// Magenta glow pulse speed (radians/sec). 0 = static.
     pub glow_pulse: f32,
+    /// Muzzle flash intensity 0..1 drawn over the viewmodel (TODO-014).
+    pub muzzle: f32,
 }
 
 impl Default for HandOverlay {
@@ -45,6 +50,7 @@ impl Default for HandOverlay {
             anchor: Vec2::new(0.78, 0.92),
             scale: 1.15,
             glow_pulse: 2.5,
+            muzzle: 0.0,
         }
     }
 }

@@ -2,7 +2,7 @@
 
 **Owner:** Gameplay Team  
 **Estimate:** 2-4 weeks  
-**Status:** Not started  
+**Status:** Complete  
 **Dependencies:** Sprint 1 (raycaster + controller), Sprint 2 (floor loader, interactables)
 
 ---
@@ -18,34 +18,21 @@ scaffold.
 
 ## Tasks
 
-- [ ] **[TODO-011]** Pixel-perfect hand sprite system (idle, interact glow, weapon fire animations). Integrate existing glowing hand assets. (4 days)
-  - **Branch:** `todo-011`
-  - **Assignee:** Dev (art integration)
-  - **Dependencies:** TODO-003 (billboard sprite support in raycaster)
-  - **Notes:** The raycaster (TODO-003) supports billboard sprites — the hand is a special billboard fixed to the camera (weapon viewmodel). States: idle, interact glow (when looking at an interactable), fire animation (per weapon). The master doc references "existing glowing hand assets" but the current `assets/` dir only has `fonts/FiraSans-Bold.ttf` — art assets need to be sourced/created (flag for TODO-042 asset pipeline). Use placeholder sprites until art is ready.
+- [x] **[TODO-011]** Pixel-perfect hand sprite system (idle, interact glow, weapon fire animations). Integrate existing glowing hand assets. (4 days)
+  - **Branch:** `sprint-03`
+  - **Notes:** Procedural weapon viewmodels (sprite ids 4–11). `HandOverlay` states via `update_hand_viewmodel`: idle, interact glow, fire + muzzle.
 
-- [ ] **[TODO-012]** Player ECS components: `Health`, `Armor`, `Inventory` (limited slots), pain flash post-process effect. (4 days)
-  - **Branch:** `todo-012`
-  - **Assignee:** Dev
-  - **Dependencies:** TODO-005 (state machine), TODO-002 (render target for pain flash overlay)
-  - **Notes:** `Health` (0-100), `Armor` (0-100, absorbs damage), `Inventory` (limited slots — keycards, key items, weapons, ammo). Pain flash: red overlay on the render target when taking damage, fading out. The existing `src/game/constants.rs` has no health/combat constants — add them here. These components attach to the `Player` entity from `src/player/controller.rs`.
+- [x] **[TODO-012]** Player ECS components: `Health`, `Armor`, `Inventory` (limited slots), pain flash post-process effect. (4 days)
+  - **Branch:** `sprint-03`
+  - **Notes:** Components on `Player`; `PainFlash` resource + fullscreen UI overlay. Autosave persists health/armor/inventory.
 
-- [ ] **[TODO-013]** Weapon system: Pistol start (9mm, scarce ammo), shotgun, plasma rifle, Adrenochrome Injector (temp vision + health drain). (1 week)
-  - **Branch:** `todo-013`
-  - **Assignee:** Dev (strong gameplay systems)
-  - **Dependencies:** TODO-011 (hand sprites), TODO-012 (inventory to hold weapons/ammo), TODO-003 (raycast hitscan)
-  - **Notes:** 4 weapons:
-    - **Pistol** — starting weapon, 9mm, scarce ammo, hitscan via raycaster.
-    - **Shotgun** — spread hitscan, close range, found mid-game.
-    - **Plasma rifle** — projectile or rapid hitscan, late game.
-    - **Adrenochrome Injector** — signature weapon/item: temporary enhanced vision (reveal hidden entities/interactables) at the cost of draining health. This ties into TODO-027 (counter to serum effects in Sprint 6).
-  - Each weapon: damage, fire rate, ammo type, hand sprite, fire animation, muzzle flash. Ammo scarcity is a core design pillar — tune in TODO-037.
+- [x] **[TODO-013]** Weapon system: Pistol start (9mm, scarce ammo), shotgun, plasma rifle, Adrenochrome Injector (temp vision + health drain). (1 week)
+  - **Branch:** `sprint-03`
+  - **Notes:** Hitscan via `cast_ray` + billboard proximity. Injector grants `AdrenoVision` and drains health. Debug grants: F5/F6/F7.
 
-- [ ] **[TODO-014]** Combat feedback: screen shake, muzzle flash on raycast hitscan, hit reactions. (3 days)
-  - **Branch:** `todo-014`
-  - **Assignee:** Dev
-  - **Dependencies:** TODO-013 (weapon system), TODO-002 (render target for flash overlay)
-  - **Notes:** Screen shake (camera yaw/pitch jitter on fire), muzzle flash (bright sprite at the hand position for a few frames), hit reactions (enemy sprite flash + knockback on hit). Hitscan: the raycaster's DDA ray can be reused for weapon raycasts — cast from player position along view direction, first wall or enemy hit takes damage.
+- [x] **[TODO-014]** Combat feedback: screen shake, muzzle flash on raycast hitscan, hit reactions. (3 days)
+  - **Branch:** `sprint-03`
+  - **Notes:** Shake applied after motor sync; muzzle on `HandOverlay`; enemy billboards (tex 0) get `CombatTarget` + `HitFlash` tint.
 
 ---
 
@@ -65,10 +52,22 @@ TODO-011 ──┼──> TODO-013 ──> TODO-014
 
 ## Acceptance Criteria
 
-- [ ] Hand sprite renders in view with idle, glow, and fire states.
-- [ ] Player has Health, Armor, Inventory components; damage reduces health, armor absorbs.
-- [ ] Pain flash overlay triggers on damage taken.
-- [ ] All 4 weapons function: pistol, shotgun, plasma rifle, Adrenochrome Injector.
-- [ ] Adrenochrome Injector grants temp vision and drains health.
-- [ ] Hitscan combat works via raycaster ray (enemies take damage, die).
-- [ ] Screen shake + muzzle flash + hit reactions fire on combat events.
+- [x] Hand sprite renders in view with idle, glow, and fire states.
+- [x] Player has Health, Armor, Inventory components; damage reduces health, armor absorbs.
+- [x] Pain flash overlay triggers on damage taken.
+- [x] All 4 weapons function: pistol, shotgun, plasma rifle, Adrenochrome Injector.
+- [x] Adrenochrome Injector grants temp vision and drains health.
+- [x] Hitscan combat works via raycaster ray (enemies take damage, die).
+- [x] Screen shake + muzzle flash + hit reactions fire on combat events.
+
+---
+
+## Controls (playtest)
+
+| Input | Action |
+|-------|--------|
+| LMB / Ctrl | Fire |
+| 1–4 | Select weapon (if owned) |
+| F5 / F6 / F7 | Grant shotgun / plasma / injector + ammo |
+| E | Interact |
+| L | Force elevator (debug) |

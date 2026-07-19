@@ -1,23 +1,27 @@
 //! Adrenochrome Ascent — Gameplay crate.
 //!
-//! ECS gameplay systems: player controller, game state machine, enemies,
-//! puzzles, and combat. Operates on the engine raycaster map grid.
-//!
-//! TODO-004: Doom-style first-person controller.
-//! TODO-005: GameState flow (MainMenu → InGame → ElevatorTransition → Ending).
+//! Player controller, game state flow, floor loading, puzzles, interaction, saves, combat.
 
 use bevy::prelude::*;
 
 use adrenochrome_engine::RaycasterSystems;
 
+pub mod combat;
+pub mod enemy;
+pub mod floor_loader;
 pub mod game;
+pub mod hazard;
+pub mod interact;
 pub mod player;
+pub mod puzzle;
+pub mod save;
 pub mod ui;
 
 pub use game::{CurrentFloor, EndingKind, GameState};
 pub use player::{Player, PlayerMotor, PlayerSet};
+pub use puzzle::PuzzleRegistry;
 
-/// Gameplay plugin: state machine + player controller.
+/// Gameplay plugin: state machine, floors, puzzles, interaction, autosave, combat.
 pub struct GameplayPlugin;
 
 impl Plugin for GameplayPlugin {
@@ -26,6 +30,19 @@ impl Plugin for GameplayPlugin {
             .init_resource::<CurrentFloor>()
             .init_resource::<EndingKind>()
             .init_resource::<game::ElevatorTimer>()
+            .init_resource::<PuzzleRegistry>()
+            .init_resource::<interact::InteractionPrompt>()
+            .init_resource::<save::ActiveSaveSlot>()
+            .init_resource::<player::PainFlash>()
+            .init_resource::<player::AdrenoVision>()
+            .init_resource::<player::ScreenShake>()
+            .init_resource::<player::MuzzleFlash>()
+            .init_resource::<enemy::BossFight>()
+            .init_resource::<enemy::WardenOverrides>()
+            .init_resource::<enemy::FactionRegistry>()
+            .init_resource::<hazard::TimedValveState>()
+            .add_message::<interact::InteractAttempt>()
+            .add_message::<enemy::PlayerDetected>()
             .configure_sets(
                 Update,
                 (
@@ -37,17 +54,22 @@ impl Plugin for GameplayPlugin {
                     .before(RaycasterSystems::Render)
                     .run_if(in_state(GameState::InGame)),
             )
+            .add_systems(Startup, floor_loader::setup_world_shell)
             // --- MainMenu ---
-            .add_systems(OnEnter(GameState::MainMenu), (
-                game::enter_main_menu_reset,
-                game::release_mouse,
-                ui::spawn_main_menu,
-            ))
+            .add_systems(
+                OnEnter(GameState::MainMenu),
+                (
+                    floor_loader::unload_floor,
+                    game::enter_main_menu_reset,
+                    game::release_mouse,
+                    ui::spawn_main_menu,
+                ),
+            )
             // --- InGame ---
             .add_systems(
                 OnEnter(GameState::InGame),
                 (
-                    game::apply_floor_palette,
+                    floor_loader::load_current_floor,
                     game::enter_in_game_spawn_player,
                     player::capture_mouse,
                     ui::spawn_ingame_hud,
@@ -55,14 +77,16 @@ impl Plugin for GameplayPlugin {
                     .chain(),
             )
             .add_systems(OnExit(GameState::InGame), game::release_mouse)
-            // --- Elevator ---
+            // --- Elevator: autosave current floor, then ride ---
             .add_systems(
                 OnEnter(GameState::ElevatorTransition),
                 (
+                    save::autosave_on_elevator,
                     game::enter_elevator,
                     game::release_mouse,
                     ui::spawn_elevator_overlay,
-                ),
+                )
+                    .chain(),
             )
             .add_systems(
                 Update,
@@ -73,16 +97,60 @@ impl Plugin for GameplayPlugin {
                 OnEnter(GameState::Ending),
                 (game::release_mouse, ui::spawn_ending),
             )
-            // --- Always-on flow input ---
             .add_systems(Update, game::flow_input)
-            // --- In-game only ---
             .add_systems(
                 Update,
                 (
                     player::toggle_cursor_grab.in_set(PlayerSet::Input),
                     player::player_look.in_set(PlayerSet::Input),
+                    player::select_weapon.in_set(PlayerSet::Input),
+                    player::debug_grant_weapons.in_set(PlayerSet::Input),
+                    player::fire_weapon.in_set(PlayerSet::Input),
                     player::player_move.in_set(PlayerSet::Move),
-                    player::apply_hand_pitch.in_set(PlayerSet::Present),
+                    hazard::push_crates.in_set(PlayerSet::Move),
+                    player::tick_weapon_timers.in_set(PlayerSet::Present),
+                    player::tick_adreno_vision.in_set(PlayerSet::Present),
+                    player::tick_pain_flash.in_set(PlayerSet::Present),
+                    player::update_hand_viewmodel.in_set(PlayerSet::Present),
+                    combat::apply_screen_shake.in_set(PlayerSet::Present),
+                    combat::tick_hit_flash.in_set(PlayerSet::Present),
+                    combat::sync_hit_flash_visual.in_set(PlayerSet::Present),
+                )
+                    .run_if(in_state(GameState::InGame)),
+            )
+            .add_systems(
+                Update,
+                (
+                    enemy::update_enemy_ai.in_set(PlayerSet::Present),
+                    enemy::radio_alert_allies.in_set(PlayerSet::Present),
+                    enemy::deploy_tech_turrets.in_set(PlayerSet::Present),
+                    enemy::update_turrets.in_set(PlayerSet::Present),
+                    enemy::enemy_melee_attack.in_set(PlayerSet::Present),
+                    enemy::sync_enemy_death_state.in_set(PlayerSet::Present),
+                    enemy::detect_boss_presence.in_set(PlayerSet::Present),
+                    enemy::tick_boss_fight.in_set(PlayerSet::Present),
+                    enemy::apply_flood_hazard.in_set(PlayerSet::Present),
+                    enemy::detect_warden_presence.in_set(PlayerSet::Present),
+                    enemy::tick_warden_fight.in_set(PlayerSet::Present),
+                    enemy::enforce_warden_pause.in_set(PlayerSet::Present),
+                    enemy::apply_warden_flood.in_set(PlayerSet::Present),
+                )
+                    .run_if(in_state(GameState::InGame)),
+            )
+            .add_systems(
+                Update,
+                (
+                    enemy::watch_boss_defeats.in_set(PlayerSet::Present),
+                    enemy::process_enemy_deaths.in_set(PlayerSet::Present),
+                    enemy::collect_loot.in_set(PlayerSet::Present),
+                    combat::despawn_dead_targets.in_set(PlayerSet::Present),
+                    hazard::tick_timed_valves,
+                    player::sync_pain_flash_ui,
+                    ui::sync_vitals_hud,
+                    ui::sync_boss_hud,
+                    interact::update_interaction_prompt,
+                    interact::try_interact,
+                    interact::sync_prompt_ui,
                     game::request_elevator,
                 )
                     .run_if(in_state(GameState::InGame)),

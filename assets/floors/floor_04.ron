@@ -1,0 +1,89 @@
+// Floor 04 — Laboratory
+FloorDef(
+  number: 4,
+  name: "Laboratory",
+  subtitle: "Lab Wing — Chem Bay",
+  cluster: Hybrid,
+  palette: Green,
+  ambient_audio: "ambient/lab_vents",
+  intro_text: "Security on site. Flank Riot Guards. Push the crate to reach the override.",
+  player_spawn: (10.5, 12.5),
+  player_yaw: -1.5707963267948966,
+  rows: [
+    "####################",
+    "#..................#",
+    "#..2222....5555....#",
+    "#..2..........5....#",
+    "#..2....DD....5....#",
+    "#..2..........5....#",
+    "#..2222....5555....#",
+    "#..................#",
+    "#.####........####.#",
+    "#.#..............#.#",
+    "#.#......MM......#.#",
+    "#.#..............#.#",
+    "#.####........####.#",
+    "#..................#",
+    "####################",
+  ],
+  entities: [
+    EntityDef(
+      pos: (8.5, 8.5),
+      kind: Enemy(
+        faction: Security,
+        archetype: PatrolSecurity,
+        scale: 0.95,
+        waypoints: [(6.5, 8.5), (12.5, 8.5), (12.5, 10.5), (6.5, 10.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 5.5),
+      kind: Enemy(
+        faction: Security,
+        archetype: RiotGuard,
+        scale: 1.1,
+        waypoints: [(9.5, 5.5), (11.5, 5.5)],
+        yaw: -1.5708,
+      ),
+    ),
+    EntityDef(
+      pos: (12.5, 10.5),
+      kind: Crate(scale: 0.7),
+    ),
+    EntityDef(
+      pos: (6.5, 10.5),
+      kind: Billboard(texture_id: 2, scale: 0.55),
+    ),
+    EntityDef(
+      pos: (10.5, 10.5),
+      kind: Interactable(
+        prompt: "Override chem lock",
+        require: None,
+        action: SetFlag("lab_override"),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 4.5),
+      kind: Interactable(
+        prompt: "Open lab door",
+        require: Some("lab_override"),
+        action: OpenDoor(cell:(10,4), flag:Some("lab_open")),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 13.2),
+      kind: Interactable(
+        prompt: "Call elevator",
+        require: Some("lab_open"),
+        action: CallElevator,
+        texture_id: None,
+        scale: 0.6,
+      ),
+    ),
+  ],
+)

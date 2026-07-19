@@ -1,0 +1,85 @@
+// Floor 01 — Awakening
+FloorDef(
+  number: 1,
+  name: "Awakening",
+  subtitle: "Basement — Medical Bay",
+  cluster: Human,
+  palette: Red,
+  ambient_audio: "ambient/basement_hum",
+  intro_text: "Restraints loose. A Mob thug patrols the bay. Find the terminal.",
+  player_spawn: (10.5, 12.5),
+  player_yaw: -1.5707963267948966,
+  rows: [
+    "####################",
+    "#..................#",
+    "#..22......55......#",
+    "#..22......55......#",
+    "#..................#",
+    "#........4.........#",
+    "#..................#",
+    "#.####........####.#",
+    "#.#..#........#..#.#",
+    "#.#..#...DD...#..#.#",
+    "#.####........####.#",
+    "#..................#",
+    "#..MM..........MM..#",
+    "#..................#",
+    "####################",
+  ],
+  entities: [
+    EntityDef(
+      pos: (10.5, 6.5),
+      kind: Enemy(
+        faction: Mob,
+        archetype: Thug,
+        scale: 0.95,
+        waypoints: [(8.5, 6.5), (12.5, 6.5), (12.5, 4.5), (8.5, 4.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
+      pos: (14.5, 8.5),
+      kind: Billboard(texture_id: 2, scale: 0.7),
+    ),
+    EntityDef(
+      pos: (3.5, 8.5),
+      kind: Interactable(
+        prompt: "Pick up keycard",
+        require: None,
+        action: SetFlag("has_keycard"),
+        texture_id: Some(3),
+        scale: 0.45,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 9.5),
+      kind: Interactable(
+        prompt: "Use bay door",
+        require: Some("has_keycard"),
+        action: OpenDoor(cell:(10,9), flag:Some("bay_open")),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (16.5, 12.5),
+      kind: Interactable(
+        prompt: "Use security terminal",
+        require: Some("has_keycard"),
+        action: SetFlag("elevator_unlocked"),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 13.2),
+      kind: Interactable(
+        prompt: "Call elevator",
+        require: Some("elevator_unlocked"),
+        action: CallElevator,
+        texture_id: None,
+        scale: 0.6,
+      ),
+    ),
+  ],
+)

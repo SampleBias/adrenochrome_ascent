@@ -1,6 +1,7 @@
 //! Floor progression and ending branch data (TODO-005 / TODO-029 hooks).
 
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use adrenochrome_engine::Palette;
 
@@ -53,7 +54,7 @@ impl CurrentFloor {
 }
 
 /// Moral-choice ending branch (populated by side puzzles in TODO-029/031).
-#[derive(Resource, Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Resource, Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum EndingKind {
     /// Default / darker ending until side puzzles flip the flag.
     #[default]

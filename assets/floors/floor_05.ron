@@ -1,0 +1,99 @@
+// Floor 05 — Server Room
+FloorDef(
+  number: 5,
+  name: "Server Room",
+  subtitle: "Data Center — Cold Aisle",
+  cluster: Hybrid,
+  palette: Green,
+  ambient_audio: "ambient/server_whine",
+  intro_text: "Turrets watch the aisle. Radio patrols will call allies. Reroute power.",
+  player_spawn: (17.5, 12.5),
+  player_yaw: 3.141592653589793,
+  rows: [
+    "####################",
+    "#.#.#.#.#.#.#.#.#..#",
+    "#.#.#.#.#.#.#.#.#..#",
+    "#..................#",
+    "#.####.DD.########.#",
+    "#..................#",
+    "#.#.#.#.#.#.#.#.#..#",
+    "#.#.#.#.#.#.#.#.#..#",
+    "#..................#",
+    "#..MM..........55..#",
+    "#..................#",
+    "#.####........####.#",
+    "#..................#",
+    "#..................#",
+    "####################",
+  ],
+  entities: [
+    EntityDef(
+      pos: (10.5, 8.5),
+      kind: Enemy(
+        faction: Security,
+        archetype: PatrolSecurity,
+        scale: 0.95,
+        waypoints: [(4.5, 8.5), (15.5, 8.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
+      pos: (5.5, 5.5),
+      kind: Enemy(
+        faction: Security,
+        archetype: HazardTech,
+        scale: 0.9,
+        waypoints: [(4.5, 5.5), (7.5, 5.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
+      pos: (14.5, 3.5),
+      kind: Turret(yaw: -1.5708, scale: 0.55),
+    ),
+    EntityDef(
+      pos: (6.5, 3.5),
+      kind: Turret(yaw: -1.5708, scale: 0.55),
+    ),
+    EntityDef(
+      pos: (10.5, 9.5),
+      kind: Interactable(
+        prompt: "Reroute power bus",
+        require: None,
+        action: SetFlag("power_restored"),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 4.5),
+      kind: Interactable(
+        prompt: "Open cold-aisle door",
+        require: Some("power_restored"),
+        action: OpenDoor(cell:(10,4), flag:Some("aisle_open")),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (3.5, 12.5),
+      kind: Interactable(
+        prompt: "Jack elevator uplink",
+        require: Some("aisle_open"),
+        action: SetFlag("elevator_unlocked"),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (17.5, 13.2),
+      kind: Interactable(
+        prompt: "Call elevator",
+        require: Some("elevator_unlocked"),
+        action: CallElevator,
+        texture_id: None,
+        scale: 0.6,
+      ),
+    ),
+  ],
+)

@@ -1,0 +1,89 @@
+// Floor 06 — Incinerator
+FloorDef(
+  number: 6,
+  name: "Incinerator",
+  subtitle: "Disposal — Burn Pit",
+  cluster: Hybrid,
+  palette: Green,
+  ambient_audio: "ambient/incinerator_roar",
+  intro_text: "Timed coolant valve — open it, then race the lock before it seals.",
+  player_spawn: (10.5, 12.5),
+  player_yaw: -1.5707963267948966,
+  rows: [
+    "####################",
+    "#..................#",
+    "#..##############..#",
+    "#..#............#..#",
+    "#..#....DD......#..#",
+    "#..#............#..#",
+    "#..######..######..#",
+    "#..................#",
+    "#....44........44..#",
+    "#..................#",
+    "#..MM..........MM..#",
+    "#..................#",
+    "#..................#",
+    "#..................#",
+    "####################",
+  ],
+  entities: [
+    EntityDef(
+      pos: (8.5, 9.5),
+      kind: Enemy(
+        faction: Security,
+        archetype: RiotGuard,
+        scale: 1.05,
+        waypoints: [(7.5, 9.5), (12.5, 9.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
+      pos: (14.5, 8.5),
+      kind: Enemy(
+        faction: Security,
+        archetype: PatrolSecurity,
+        scale: 0.9,
+        waypoints: [(13.5, 8.5), (15.5, 8.5), (15.5, 11.5), (13.5, 11.5)],
+        yaw: 3.14159,
+      ),
+    ),
+    EntityDef(
+      pos: (5.5, 8.5),
+      kind: Crate(scale: 0.7),
+    ),
+    EntityDef(
+      pos: (10.5, 8.5),
+      kind: Billboard(texture_id: 2, scale: 0.6),
+    ),
+    EntityDef(
+      pos: (6.5, 10.5),
+      kind: Interactable(
+        prompt: "Open coolant valve (timed)",
+        require: None,
+        action: TimedValve(flag: "valve_open", window_secs: 12.0),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 4.5),
+      kind: Interactable(
+        prompt: "Cycle incinerator lock",
+        require: Some("valve_open"),
+        action: OpenDoor(cell:(10,4), flag:Some("burn_open")),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 13.2),
+      kind: Interactable(
+        prompt: "Call elevator",
+        require: Some("burn_open"),
+        action: CallElevator,
+        texture_id: None,
+        scale: 0.6,
+      ),
+    ),
+  ],
+)

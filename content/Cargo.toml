@@ -8,3 +8,5 @@ description = "Floor data, asset definitions, and content for Adrenochrome Ascen
 [dependencies]
 bevy.workspace = true
 adrenochrome_engine = { path = "../engine" }
+serde.workspace = true
+ron.workspace = true

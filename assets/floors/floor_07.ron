@@ -1,0 +1,111 @@
+// Floor 07 — Warden Arena
+FloorDef(
+  number: 7,
+  name: "Warden Block",
+  subtitle: "Containment — Flood Basin",
+  cluster: Hybrid,
+  palette: Green,
+  ambient_audio: "ambient/ward_alarm",
+  intro_text: "The Warden. When combat pauses, turn the valves. Flood rises until you do.",
+  player_spawn: (10.5, 12.5),
+  player_yaw: -1.5707963267948966,
+  rows: [
+    "####################",
+    "#..................#",
+    "#..####....####....#",
+    "#..#..........#....#",
+    "#..#....DD....#....#",
+    "#..#..........#....#",
+    "#..####....####....#",
+    "#..................#",
+    "#..................#",
+    "#..................#",
+    "#.####........####.#",
+    "#.#..............#.#",
+    "#.#..............#.#",
+    "#..................#",
+    "####################",
+  ],
+  entities: [
+    EntityDef(
+      pos: (10.5, 7.5),
+      kind: Enemy(
+        faction: Security,
+        archetype: Warden,
+        scale: 1.3,
+        waypoints: [(9.0, 7.5), (12.0, 7.5), (12.0, 5.5), (9.0, 5.5)],
+        yaw: 3.14159,
+      ),
+    ),
+    EntityDef(
+      pos: (4.5, 9.5),
+      kind: Enemy(
+        faction: Security,
+        archetype: PatrolSecurity,
+        scale: 0.95,
+        waypoints: [(3.5, 9.5), (6.5, 9.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
+      pos: (15.5, 9.5),
+      kind: Enemy(
+        faction: Security,
+        archetype: RiotGuard,
+        scale: 1.1,
+        waypoints: [(14.5, 9.5), (16.5, 9.5)],
+        yaw: 3.14159,
+      ),
+    ),
+    EntityDef(
+      pos: (3.5, 7.5),
+      kind: Interactable(
+        prompt: "Coolant valve A (timed)",
+        require: None,
+        action: TimedValve(flag: "warden_valve_a", window_secs: 20.0),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (16.5, 7.5),
+      kind: Interactable(
+        prompt: "Drain valve B (timed)",
+        require: None,
+        action: TimedValve(flag: "warden_valve_b", window_secs: 20.0),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (14.5, 3.5),
+      kind: Interactable(
+        prompt: "Release subject controls",
+        require: Some("warden_down"),
+        action: ReleaseSubjects,
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 4.5),
+      kind: Interactable(
+        prompt: "Open basin gate",
+        require: Some("warden_down"),
+        action: OpenDoor(cell:(10,4), flag:Some("basin_open")),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 13.2),
+      kind: Interactable(
+        prompt: "Call elevator",
+        require: Some("warden_down && basin_open"),
+        action: CallElevator,
+        texture_id: None,
+        scale: 0.6,
+      ),
+    ),
+  ],
+)
