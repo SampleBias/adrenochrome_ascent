@@ -137,11 +137,21 @@ pub enum InteractAction {
         #[serde(default)]
         set_flag: Option<String>,
     },
+    /// Fire a PA banner + voice sting (TODO-036).
+    AnnouncePa {
+        text: String,
+        #[serde(default = "default_pa_duration")]
+        duration: f32,
+    },
     /// Apply puzzle DSL effects if condition holds (TODO-026).
     RunEffects {
         require: Option<String>,
         effects: Vec<PuzzleEffectId>,
     },
+}
+
+fn default_pa_duration() -> f32 {
+    4.0
 }
 
 fn default_one() -> i32 {
@@ -246,6 +256,52 @@ pub struct EntityDef {
     pub kind: EntityKind,
 }
 
+/// Boss / alarm wave tuning authored per floor (TODO-036).
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct WaveTuning {
+    /// Max living grunts before summons pause.
+    #[serde(default = "default_max_grunts")]
+    pub max_grunts: u8,
+    /// Seconds between summons.
+    #[serde(default = "default_wave_cooldown")]
+    pub cooldown_secs: f32,
+}
+
+fn default_max_grunts() -> u8 {
+    3
+}
+fn default_wave_cooldown() -> f32 {
+    8.0
+}
+
+impl Default for WaveTuning {
+    fn default() -> Self {
+        Self {
+            max_grunts: default_max_grunts(),
+            cooldown_secs: default_wave_cooldown(),
+        }
+    }
+}
+
+impl WaveTuning {
+    pub fn for_cluster(cluster: FloorCluster) -> Self {
+        match cluster {
+            FloorCluster::Human => Self {
+                max_grunts: 2,
+                cooldown_secs: 9.5,
+            },
+            FloorCluster::Hybrid => Self {
+                max_grunts: 3,
+                cooldown_secs: 8.0,
+            },
+            FloorCluster::Surface => Self {
+                max_grunts: 4,
+                cooldown_secs: 6.5,
+            },
+        }
+    }
+}
+
 /// One floor of the ascent.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FloorDef {
@@ -263,9 +319,17 @@ pub struct FloorDef {
     /// Row-major ASCII grid (same charset as [`MapGrid::from_rows`]).
     pub rows: Vec<String>,
     pub entities: Vec<EntityDef>,
+    /// Optional boss-wave tuning; defaults from cluster if omitted.
+    #[serde(default)]
+    pub wave_tuning: Option<WaveTuning>,
 }
 
 impl FloorDef {
+    pub fn resolved_wave_tuning(&self) -> WaveTuning {
+        self.wave_tuning
+            .unwrap_or_else(|| WaveTuning::for_cluster(self.cluster))
+    }
+
     pub fn to_map_grid(&self) -> MapGrid {
         let refs: Vec<&str> = self.rows.iter().map(|s| s.as_str()).collect();
         MapGrid::from_rows(&refs)
@@ -276,6 +340,19 @@ impl FloorDef {
     }
 }
 
+fn floor_asset_candidates(rel: &str) -> Vec<std::path::PathBuf> {
+    let mut candidates = vec![
+        std::path::PathBuf::from("assets").join(rel),
+        std::path::PathBuf::from("adrenochrome_ascent/assets").join(rel),
+    ];
+    if let Ok(manifest) = std::env::var("CARGO_MANIFEST_DIR") {
+        // `content/` or `gameplay/` crate → workspace `assets/`
+        candidates.push(std::path::PathBuf::from(&manifest).join("../assets").join(rel));
+        candidates.push(std::path::PathBuf::from(&manifest).join("../../assets").join(rel));
+    }
+    candidates
+}
+
 /// Load a floor definition from an absolute or cwd-relative filesystem path.
 pub fn load_floor_file(path: &std::path::Path) -> Result<FloorDef, String> {
     let text = std::fs::read_to_string(path)
@@ -283,26 +360,20 @@ pub fn load_floor_file(path: &std::path::Path) -> Result<FloorDef, String> {
     ron::from_str::<FloorDef>(&text).map_err(|e| format!("parse {}: {e}", path.display()))
 }
 
+/// Resolve a path under `assets/` (e.g. `floors/ending_road.ron`).
+pub fn load_floor_asset(rel: &str) -> Result<FloorDef, String> {
+    for path in floor_asset_candidates(rel) {
+        if path.exists() {
+            return load_floor_file(&path);
+        }
+    }
+    Err(format!("floor asset not found (tried assets/{rel})"))
+}
+
 /// Resolve `assets/floors/floor_XX.ron` from cwd or workspace root.
 pub fn load_floor_number(number: u8) -> Result<FloorDef, String> {
     let rel = FloorDef::asset_path(number);
-    let mut candidates = vec![
-        std::path::PathBuf::from("assets").join(&rel),
-        std::path::PathBuf::from("adrenochrome_ascent/assets").join(&rel),
-    ];
-    if let Ok(manifest) = std::env::var("CARGO_MANIFEST_DIR") {
-        // `content/` or `gameplay/` crate → workspace `assets/`
-        candidates.push(std::path::PathBuf::from(&manifest).join("../assets").join(&rel));
-        candidates.push(std::path::PathBuf::from(&manifest).join("../../assets").join(&rel));
-    }
-    for path in &candidates {
-        if path.exists() {
-            return load_floor_file(path);
-        }
-    }
-    Err(format!(
-        "floor {number} not found (tried assets/{rel})"
-    ))
+    load_floor_asset(&rel).map_err(|_| format!("floor {number} not found (tried assets/{rel})"))
 }
 
 #[cfg(test)]
@@ -340,6 +411,15 @@ mod tests {
             assert!(!def.rows.is_empty());
             let _ = def.to_map_grid();
         }
+    }
+
+    #[test]
+    fn loads_ending_road_cinematic() {
+        let def = load_floor_asset("floors/ending_road.ron")
+            .unwrap_or_else(|e| panic!("ending_road: {e}"));
+        assert_eq!(def.number, 99);
+        assert_eq!(def.cluster, FloorCluster::Surface);
+        assert!(!def.entities.is_empty());
     }
 
     #[test]

@@ -1,8 +1,8 @@
-//! Lightweight state-overlay UI (TODO-005). In-game vitals live in the 320×200 pixel HUD (TODO-033).
+//! State overlays: main menu, options, credits, game over, ending (TODO-005 / TODO-040).
 
 use bevy::prelude::*;
 
-use crate::game::{CurrentFloor, EndingKind, GameState};
+use crate::game::{CurrentFloor, EndingKind, GameSettings, GameState, MenuCursor};
 use crate::enemy::{BossFight, ScientistFight, WardenOverrides};
 use crate::player::{
     weapon_stats, Armor, Health, Inventory, Player, SerumEffect, WeaponLoadout,
@@ -38,14 +38,14 @@ fn fullscreen_root(bg: Color) -> (Node, BackgroundColor) {
 
 pub fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     let title = title_font(&asset_server, 42.0);
-    let body = title_font(&asset_server, 18.0);
+    let body = title_font(&asset_server, 16.0);
 
     commands
         .spawn((
             Name::new("MainMenuUi"),
             MenuUi,
             DespawnOnExit(GameState::MainMenu),
-            fullscreen_root(Color::srgba(0.02, 0.01, 0.02, 0.82)),
+            fullscreen_root(Color::srgba(0.02, 0.01, 0.02, 0.88)),
         ))
         .with_children(|parent| {
             parent.spawn((
@@ -54,11 +54,161 @@ pub fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                 TextColor(Color::srgb(0.75, 0.12, 0.14)),
             ));
             parent.spawn((
-                Text::new(
-                    "Wake in the basement. Solve. Survive. Ascend.\n\n[ENTER] New Game    [ESC] Quit",
-                ),
+                MainMenuBody,
+                Text::new(menu_body_text(0, 1)),
                 body,
                 TextColor(Color::srgb(0.72, 0.68, 0.70)),
+            ));
+        });
+}
+
+#[derive(Component)]
+pub struct MainMenuBody;
+
+fn menu_body_text(index: usize, load_slot: u8) -> String {
+    let rows = [
+        "New Game",
+        &format!("Load Game  [slot {load_slot:02}]  ← →"),
+        "Options",
+        "Credits",
+        "Quit",
+    ];
+    let mut out = String::from("Wake in the basement. Solve. Survive. Ascend.\n\n");
+    for (i, row) in rows.iter().enumerate() {
+        if i == index {
+            out.push_str(&format!("> {row}\n"));
+        } else {
+            out.push_str(&format!("  {row}\n"));
+        }
+    }
+    out.push_str("\n[↑↓] Select   [ENTER] Confirm   [ESC] Quit");
+    out
+}
+
+pub fn sync_main_menu_cursor(
+    cursor: Res<MenuCursor>,
+    mut texts: Query<&mut Text, With<MainMenuBody>>,
+) {
+    if !cursor.is_changed() {
+        return;
+    }
+    let Ok(mut text) = texts.single_mut() else {
+        return;
+    };
+    **text = menu_body_text(cursor.index, cursor.load_slot);
+}
+
+pub fn spawn_options_menu(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    settings: Res<GameSettings>,
+) {
+    let title = title_font(&asset_server, 28.0);
+    let body = title_font(&asset_server, 16.0);
+    commands
+        .spawn((
+            Name::new("OptionsUi"),
+            MenuUi,
+            DespawnOnExit(GameState::Options),
+            fullscreen_root(Color::srgba(0.02, 0.02, 0.04, 0.9)),
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                Text::new("OPTIONS"),
+                title,
+                TextColor(Color::srgb(0.7, 0.85, 0.7)),
+            ));
+            parent.spawn((
+                OptionsBody,
+                Text::new(options_body(&settings)),
+                body,
+                TextColor(Color::srgb(0.75, 0.75, 0.78)),
+            ));
+        });
+}
+
+#[derive(Component)]
+pub struct OptionsBody;
+
+fn options_body(s: &GameSettings) -> String {
+    format!(
+        "[M] Music volume   {:.0}%\n\
+         [N] SFX volume     {:.0}%\n\
+         [C] CRT effects    {}\n\
+         [V] Dither         {}\n\
+         [F] Fullscreen     {}\n\n\
+         [ENTER/ESC] Back",
+        s.music_volume * 100.0,
+        s.sfx_volume * 100.0,
+        if s.crt_enabled { "ON" } else { "OFF" },
+        if s.dither_enabled { "ON" } else { "OFF" },
+        if s.fullscreen { "ON" } else { "OFF" },
+    )
+}
+
+pub fn sync_options_body(
+    settings: Res<GameSettings>,
+    mut texts: Query<&mut Text, With<OptionsBody>>,
+) {
+    if !settings.is_changed() {
+        return;
+    }
+    let Ok(mut text) = texts.single_mut() else {
+        return;
+    };
+    **text = options_body(&settings);
+}
+
+pub fn spawn_credits(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let title = title_font(&asset_server, 28.0);
+    let body = title_font(&asset_server, 15.0);
+    commands
+        .spawn((
+            Name::new("CreditsUi"),
+            MenuUi,
+            DespawnOnExit(GameState::Credits),
+            fullscreen_root(Color::srgba(0.01, 0.01, 0.02, 0.92)),
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                Text::new("CREDITS"),
+                title,
+                TextColor(Color::srgb(0.85, 0.75, 0.55)),
+            ));
+            parent.spawn((
+                Text::new(
+                    "Adrenochrome Ascent\n\
+                     Engine · Gameplay · Content\n\
+                     Bevy 0.19 software raycaster + CRT\n\n\
+                     Thanks for ascending.\n\n\
+                     [ENTER/ESC] Back",
+                ),
+                body,
+                TextColor(Color::srgb(0.7, 0.7, 0.72)),
+            ));
+        });
+}
+
+pub fn spawn_game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let title = title_font(&asset_server, 34.0);
+    let body = title_font(&asset_server, 16.0);
+    commands
+        .spawn((
+            Name::new("GameOverUi"),
+            MenuUi,
+            DespawnOnExit(GameState::GameOver),
+            fullscreen_root(Color::srgba(0.08, 0.0, 0.0, 0.88)),
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                Text::new("YOU DIED"),
+                title,
+                TextColor(Color::srgb(0.85, 0.2, 0.2)),
+            ));
+            parent.spawn((
+                Text::new("[ENTER] Load last autosave    [ESC] Main Menu"),
+                body,
+                TextColor(Color::srgb(0.8, 0.7, 0.7)),
             ));
         });
 }
@@ -105,13 +255,21 @@ pub fn spawn_elevator_overlay(
 pub fn spawn_ending(mut commands: Commands, asset_server: Res<AssetServer>, ending: Res<EndingKind>) {
     let title = title_font(&asset_server, 34.0);
     let body = title_font(&asset_server, 18.0);
+    let road = match *ending {
+        EndingKind::Released => {
+            "Snow. Headlights. Open gates.\nLimos idle on the mountain road —\nand someone else gets daylight."
+        }
+        EndingKind::Contained => {
+            "The convoy swallows the mountain road.\nEngines. Black glass. No witnesses.\nWhatever you left below stays below."
+        }
+    };
 
     commands
         .spawn((
             Name::new("EndingUi"),
             MenuUi,
             DespawnOnExit(GameState::Ending),
-            fullscreen_root(Color::srgba(0.01, 0.02, 0.03, 0.88)),
+            fullscreen_root(Color::srgba(0.01, 0.02, 0.03, 0.82)),
         ))
         .with_children(|parent| {
             parent.spawn((
@@ -121,7 +279,8 @@ pub fn spawn_ending(mut commands: Commands, asset_server: Res<AssetServer>, endi
             ));
             parent.spawn((
                 Text::new(format!(
-                    "{}\n\nLimo engines idle on the mountain road.\n\n[ENTER] Main Menu",
+                    "{}\n\n{}\n\n[ENTER] Main Menu",
+                    road,
                     ending.blurb()
                 )),
                 body,
@@ -155,11 +314,10 @@ pub fn spawn_ingame_hud(mut commands: Commands, asset_server: Res<AssetServer>) 
         ))
         .with_children(|parent| {
             parent.spawn((
-                Text::new("[E] Interact  [1-4] Weapon  [L] Elevator  [TAB] Cursor"),
+                Text::new("[E] Interact  [1-4] Weapon  [ESC] Options"),
                 font,
                 TextColor(Color::srgba(0.75, 0.72, 0.68, 0.55)),
             ));
-            // Keep markers so legacy sync systems stay harmless if queried empty.
             parent.spawn((VitalsHudText, Text::new(""), font_size_zero(&asset_server)));
             parent.spawn((BossHudText, Text::new(""), font_size_zero(&asset_server)));
             parent.spawn((DnaHudText, Text::new(""), font_size_zero(&asset_server)));
@@ -174,7 +332,7 @@ fn font_size_zero(asset_server: &AssetServer) -> TextFont {
     }
 }
 
-/// Refresh health / armor / weapon / ammo readout.
+/// Refresh health / armor / weapon / ammo readout (legacy markers; pixel HUD is primary).
 pub fn sync_vitals_hud(
     player: Query<(&Health, &Armor, &Inventory, &WeaponLoadout), With<Player>>,
     serum: Res<SerumEffect>,

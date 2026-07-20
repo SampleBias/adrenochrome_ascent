@@ -105,19 +105,19 @@ Key Features: Custom raycaster / low-res 320x200 CRT aesthetic, puzzle DSL, enem
 ## Sprint 9: Content Completion & Balancing
 **Owner:** Content + Gameplay Teams
 
-- [ ] **[TODO-035]** Detailed floor-by-floor room lists + 3–5 interconnected puzzles per floor (keycards, breakers, DNA, emails). (2 weeks)
-- [ ] **[TODO-036]** Boss tease scripts (PA/terminals) + enemy wave tuning per cluster. (1 week)
-- [ ] **[TODO-037]** Full weapon/enemy balance pass (ammo scarcity, puzzle vs combat ratio). (1 week)
+- [x] **[TODO-035]** Detailed floor-by-floor room lists + 3–5 interconnected puzzles per floor (keycards, breakers, DNA, emails). (2 weeks)
+- [x] **[TODO-036]** Boss tease scripts (PA/terminals) + enemy wave tuning per cluster. (1 week)
+- [x] **[TODO-037]** Full weapon/enemy balance pass (ammo scarcity, puzzle vs combat ratio). (1 week)
 
 ---
 
 ## Sprint 10: Testing, Optimization & Ship
 **Owner:** All Teams
 
-- [ ] **[TODO-038]** Full playtest loop: Floor 1 → ending. Identify and fix softlocks. (1–2 weeks)
-- [ ] **[MASTER]** **[TODO-039]** Performance optimization: raycaster culling, sprite batching, save system. (5 days)
-- [ ] **[TODO-040]** Main menu, options, credits, ending cinematics (snowy mountain road with limos). (1 week)
-- [ ] **[TODO-041]** Final integration: all factions, bosses, moral endings, cross-system polish. (final week)
+- [x] **[TODO-038]** Full playtest loop: Floor 1 → ending. Identify and fix softlocks. (1–2 weeks)
+- [x] **[MASTER]** **[TODO-039]** Performance optimization: raycaster culling, sprite batching, save system. (5 days)
+- [x] **[TODO-040]** Main menu, options, credits, ending cinematics (snowy mountain road with limos). (1 week)
+- [x] **[TODO-041]** Final integration: all factions, bosses, moral endings, cross-system polish. (final week)
 
 ---
 

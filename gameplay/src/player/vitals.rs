@@ -88,10 +88,10 @@ impl Default for Inventory {
         slots[0] = Some(ItemKind::Weapon(WeaponId::Pistol));
         Self {
             slots,
-            ammo_9mm: 24,
+            ammo_9mm: 12,
             ammo_shells: 0,
             ammo_cells: 0,
-            ammo_adreno: 2,
+            ammo_adreno: 1,
         }
     }
 }
@@ -184,7 +184,7 @@ mod tests {
         let mut inv = Inventory::default();
         assert!(inv.has_weapon(WeaponId::Pistol));
         assert!(inv.try_consume(AmmoType::Bullet9mm, 1));
-        assert_eq!(inv.ammo_9mm, 23);
+        assert_eq!(inv.ammo_9mm, 11);
         assert!(!inv.try_consume(AmmoType::Shell, 1));
     }
 }

@@ -140,8 +140,13 @@ pub fn render_frame(
         }
     }
 
-    // --- World billboards ---
+    // --- World billboards (far→near for overdraw; cull behind/off-screen in draw) ---
     let mut sprites: Vec<&Billboard> = billboards.iter().collect();
+    // Skip sprites clearly behind the camera before sort (TODO-039).
+    sprites.retain(|s| {
+        let rel = s.pos - camera.pos;
+        rel.dot(camera.dir) > -0.5
+    });
     sprites.sort_by(|a, b| {
         let da = (a.pos - camera.pos).length_squared();
         let db = (b.pos - camera.pos).length_squared();
@@ -250,7 +255,10 @@ fn draw_billboard(
     if transform_y <= 0.05 {
         return; // behind camera
     }
-
+    // Distance / frustum cull (TODO-039).
+    if transform_y > 18.0 {
+        return;
+    }
     let sprite_screen_x = ((w as f32 / 2.0) * (1.0 + transform_x / transform_y)) as i32;
     let sprite_h = (h as f32 / transform_y * sprite.scale).abs() as i32;
     let sprite_w = sprite_h; // square sprites
@@ -259,6 +267,9 @@ fn draw_billboard(
     let draw_end_y = (sprite_h / 2 + h as i32 / 2).min(h as i32 - 1);
     let draw_start_x = (-sprite_w / 2 + sprite_screen_x).max(0);
     let draw_end_x = (sprite_w / 2 + sprite_screen_x).min(w as i32 - 1);
+    if draw_start_x > draw_end_x || draw_start_y > draw_end_y {
+        return; // fully off-screen
+    }
 
     for stripe in draw_start_x..=draw_end_x {
         let tex_x = ((256 * (stripe - (-sprite_w / 2 + sprite_screen_x)) * TEX_SIZE as i32)

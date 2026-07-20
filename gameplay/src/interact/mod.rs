@@ -10,6 +10,7 @@ use crate::enemy::{Enemy, FloorAlarm, ScientistFight};
 use crate::game::{EndingKind, GameState};
 use crate::hazard::TimedValveState;
 use crate::puzzle::{apply_effects, DnaSequencer, PuzzleRegistry};
+use crate::audio::PaAnnouncement;
 use crate::ui::TerminalSession;
 
 /// Max interaction reach in map cells.
@@ -94,6 +95,7 @@ pub fn try_interact(
     mut ending: ResMut<EndingKind>,
     mut alarm: ResMut<FloorAlarm>,
     mut terminal: ResMut<TerminalSession>,
+    mut pa: ResMut<PaAnnouncement>,
     mut next_state: ResMut<NextState<GameState>>,
     mut attempts: MessageWriter<InteractAttempt>,
     query: Query<(Entity, &Interactable, &Transform)>,
@@ -142,6 +144,7 @@ pub fn try_interact(
         &mut ending,
         &mut alarm,
         &mut terminal,
+        &mut pa,
         &mut next_state,
         &mut map,
         &mut bosses,
@@ -157,6 +160,7 @@ fn apply_action(
     ending: &mut EndingKind,
     alarm: &mut FloorAlarm,
     terminal: &mut TerminalSession,
+    pa: &mut PaAnnouncement,
     next_state: &mut NextState<GameState>,
     map: &mut MapGrid,
     bosses: &mut Query<(&Enemy, &mut CombatTarget)>,
@@ -230,6 +234,10 @@ fn apply_action(
         } => {
             terminal.open(title.clone(), body.clone(), set_flag.clone());
             info!("Opened terminal: {title}");
+        }
+        InteractAction::AnnouncePa { text, duration } => {
+            pa.announce(text.clone(), *duration);
+            info!("PA: {text}");
         }
         InteractAction::RunEffects { require, effects } => {
             let ok = require

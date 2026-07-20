@@ -1,4 +1,5 @@
-// Floor 04 — Laboratory
+// Floor 04 — Laboratory (Hybrid / Green)
+// Puzzle: vent power → crate push → chem override terminal → lab door → elev
 FloorDef(
   number: 4,
   name: "Laboratory",
@@ -6,67 +7,84 @@ FloorDef(
   cluster: Hybrid,
   palette: Green,
   ambient_audio: "ambient/lab_vents",
-  intro_text: "Security on site. Flank Riot Guards. Push the crate to reach the override.",
-  player_spawn: (10.5, 12.5),
+  intro_text: "Security owns the bay. Flank Riot Guards. Push the chem crate, then override the lock.",
+  player_spawn: (10.5, 14.5),
   player_yaw: -1.5707963267948966,
   rows: [
-    "####################",
-    "#..................#",
-    "#..2222....5555....#",
-    "#..2..........5....#",
-    "#..2....DD....5....#",
-    "#..2..........5....#",
-    "#..2222....5555....#",
-    "#..................#",
-    "#.####........####.#",
-    "#.#..............#.#",
-    "#.#......MM......#.#",
-    "#.#..............#.#",
-    "#.####........####.#",
-    "#..................#",
-    "####################",
+    "######################",
+    "#....................#",
+    "#..2222......5555....#",
+    "#....................#",
+    "##########DD##########",
+    "#....................#",
+    "#..####......####....#",
+    "#..#............#....#",
+    "#..#............#....#",
+    "#..####......####....#",
+    "#....................#",
+    "#.####..........####.#",
+    "#.#..#..........#..#.#",
+    "#.#..............#.#.#",
+    "#.####..........####.#",
+    "#....................#",
+    "######################",
   ],
   entities: [
     EntityDef(
-      pos: (8.5, 8.5),
+      pos: (8.5, 10.5),
       kind: Enemy(
         faction: Security,
         archetype: PatrolSecurity,
         scale: 0.95,
-        waypoints: [(6.5, 8.5), (12.5, 8.5), (12.5, 10.5), (6.5, 10.5)],
+        waypoints: [(5.5, 10.5), (15.5, 10.5), (15.5, 7.5), (5.5, 7.5)],
         yaw: 0.0,
       ),
     ),
     EntityDef(
-      pos: (10.5, 5.5),
+      pos: (10.5, 7.5),
       kind: Enemy(
         faction: Security,
         archetype: RiotGuard,
         scale: 1.1,
-        waypoints: [(9.5, 5.5), (11.5, 5.5)],
+        waypoints: [(8.5, 7.5), (12.5, 7.5)],
         yaw: -1.5708,
       ),
     ),
+    // Blocks the west alcove entrance; push aside to reach chem terminal.
     EntityDef(
-      pos: (12.5, 10.5),
+      pos: (4.5, 13.5),
       kind: Crate(scale: 0.7),
     ),
     EntityDef(
-      pos: (6.5, 10.5),
+      pos: (18.5, 12.5),
       kind: Billboard(texture_id: 2, scale: 0.55),
     ),
     EntityDef(
-      pos: (10.5, 10.5),
+      pos: (17.5, 12.5),
       kind: Interactable(
-        prompt: "Override chem lock",
+        prompt: "Restore lab vent power",
         require: None,
-        action: SetFlag("lab_override"),
+        action: SetFlag("lab_power"),
         texture_id: None,
         scale: 0.5,
       ),
     ),
     EntityDef(
-      pos: (10.5, 4.5),
+      pos: (3.5, 12.5),
+      kind: Interactable(
+        prompt: "Chem lock override terminal",
+        require: Some("lab_power"),
+        action: OpenTerminal(
+          title: "CHEM OVERRIDE",
+          body: "Bay seals engaged.\nConfirm reagent flush to release the lab door maglock.",
+          set_flag: Some("lab_override"),
+        ),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 5.5),
       kind: Interactable(
         prompt: "Open lab door",
         require: Some("lab_override"),
@@ -76,7 +94,7 @@ FloorDef(
       ),
     ),
     EntityDef(
-      pos: (4.5, 11.5),
+      pos: (3.5, 15.2),
       kind: Interactable(
         prompt: "Vent toxin to save the test bay",
         require: None,
@@ -86,7 +104,7 @@ FloorDef(
       ),
     ),
     EntityDef(
-      pos: (10.5, 13.2),
+      pos: (10.5, 15.2),
       kind: Interactable(
         prompt: "Call elevator",
         require: Some("lab_open"),
@@ -96,4 +114,5 @@ FloorDef(
       ),
     ),
   ],
+  wave_tuning: Some(WaveTuning(max_grunts: 3, cooldown_secs: 8.0)),
 )

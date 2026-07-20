@@ -16,8 +16,8 @@ dependencies, parallelization notes, and mapping to the existing codebase scaffo
 | 6 | Late-Game Factions & Mini-Games (Scientist Tier) | [sprint-06-late-game-factions-minigames-scientist-tier.md](sprint-06-late-game-factions-minigames-scientist-tier.md) | TODO-024 → 027 | Complete |
 | 7 | Executive Tier, Progression & Moral Choice | [sprint-07-executive-tier-progression-moral-choice.md](sprint-07-executive-tier-progression-moral-choice.md) | TODO-028 → 031 | Complete |
 | 8 | Audio, UI & Polish | [sprint-08-audio-ui-polish.md](sprint-08-audio-ui-polish.md) | TODO-032 → 034 | Complete |
-| 9 | Content Completion & Balancing | [sprint-09-content-completion-balancing.md](sprint-09-content-completion-balancing.md) | TODO-035 → 037 | Not started |
-| 10 | Testing, Optimization & Ship | [sprint-10-testing-optimization-ship.md](sprint-10-testing-optimization-ship.md) | TODO-038 → 041 | Not started |
+| 9 | Content Completion & Balancing | [sprint-09-content-completion-balancing.md](sprint-09-content-completion-balancing.md) | TODO-035 → 037 | Complete |
+| 10 | Testing, Optimization & Ship | [sprint-10-testing-optimization-ship.md](sprint-10-testing-optimization-ship.md) | TODO-038 → 041 | Complete |
 
 ## Cross-Cutting TODOs
 

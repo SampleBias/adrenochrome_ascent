@@ -108,24 +108,24 @@ fn base(
 pub fn archetype_stats(archetype: EnemyArchetype) -> ArchetypeStats {
     match archetype {
         EnemyArchetype::Thug => base(
-            35.0, 0.95, 1.4, 2.4, 1.15, 8.0, 0.85, 7.0, 0.45, 0.22, TEX_THUG, TEX_THUG_ATK,
+            40.0, 0.95, 1.4, 2.4, 1.15, 10.0, 0.85, 7.0, 0.45, 0.22, TEX_THUG, TEX_THUG_ATK,
             Faction::Mob,
         ),
         EnemyArchetype::Heavy => base(
-            90.0, 1.15, 0.9, 1.5, 1.35, 18.0, 1.2, 6.0, 0.35, 0.28, TEX_HEAVY, TEX_HEAVY_ATK,
+            105.0, 1.15, 0.9, 1.5, 1.35, 20.0, 1.2, 6.0, 0.35, 0.28, TEX_HEAVY, TEX_HEAVY_ATK,
             Faction::Mob,
         ),
         EnemyArchetype::Zed => base(
-            22.0, 0.85, 1.8, 3.2, 1.0, 6.0, 0.55, 8.5, 0.2, 0.2, TEX_ZED, TEX_ZED_ATK,
+            26.0, 0.85, 1.8, 3.2, 1.0, 7.0, 0.55, 8.5, 0.2, 0.2, TEX_ZED, TEX_ZED_ATK,
             Faction::Mob,
         ),
         EnemyArchetype::Lieutenant => base(
-            220.0, 1.25, 1.1, 1.8, 1.5, 14.0, 1.0, 12.0, -0.2, 0.3, TEX_LIEUTENANT,
+            240.0, 1.25, 1.1, 1.8, 1.5, 15.0, 1.0, 12.0, -0.2, 0.3, TEX_LIEUTENANT,
             TEX_LIEUTENANT_ATK, Faction::Mob,
         ),
         EnemyArchetype::RiotGuard => {
             let mut s = base(
-                70.0, 1.1, 0.85, 1.4, 1.25, 12.0, 1.0, 6.5, 0.4, 0.28, TEX_RIOT, TEX_RIOT_ATK,
+                80.0, 1.1, 0.85, 1.4, 1.25, 14.0, 1.0, 6.5, 0.4, 0.28, TEX_RIOT, TEX_RIOT_ATK,
                 Faction::Security,
             );
             s.has_shield = true;
@@ -133,7 +133,7 @@ pub fn archetype_stats(archetype: EnemyArchetype) -> ArchetypeStats {
         }
         EnemyArchetype::PatrolSecurity => {
             let mut s = base(
-                45.0, 0.95, 1.5, 2.5, 1.15, 9.0, 0.75, 8.0, 0.35, 0.22, TEX_PATROL, TEX_PATROL_ATK,
+                50.0, 0.95, 1.5, 2.5, 1.15, 11.0, 0.75, 8.0, 0.35, 0.22, TEX_PATROL, TEX_PATROL_ATK,
                 Faction::Security,
             );
             s.radio_alert = true;
@@ -141,7 +141,7 @@ pub fn archetype_stats(archetype: EnemyArchetype) -> ArchetypeStats {
         }
         EnemyArchetype::HazardTech => {
             let mut s = base(
-                40.0, 0.9, 1.3, 2.0, 1.1, 7.0, 0.9, 7.0, 0.4, 0.22, TEX_TECH, TEX_TECH_ATK,
+                45.0, 0.9, 1.3, 2.0, 1.1, 8.0, 0.9, 7.0, 0.4, 0.22, TEX_TECH, TEX_TECH_ATK,
                 Faction::Security,
             );
             s.deploys_turret = true;
@@ -149,7 +149,7 @@ pub fn archetype_stats(archetype: EnemyArchetype) -> ArchetypeStats {
         }
         EnemyArchetype::Warden => {
             let mut s = base(
-                280.0, 1.3, 1.0, 1.7, 1.55, 16.0, 0.95, 14.0, -0.15, 0.32, TEX_WARDEN,
+                300.0, 1.3, 1.0, 1.7, 1.55, 18.0, 0.95, 14.0, -0.15, 0.32, TEX_WARDEN,
                 TEX_WARDEN_ATK, Faction::Security,
             );
             s.has_shield = true;

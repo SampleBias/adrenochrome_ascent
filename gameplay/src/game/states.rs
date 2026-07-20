@@ -1,4 +1,4 @@
-//! Top-level game flow states (TODO-005).
+//! Top-level game flow states (TODO-005 / TODO-040).
 //!
 //! Floor progression lives in [`crate::game::floor::CurrentFloor`], not as
 //! separate states. Elevator rides use `ElevatorTransition`; moral endings
@@ -14,8 +14,14 @@ pub enum GameState {
     MainMenu,
     /// Exploring and solving the current floor.
     InGame,
-    /// Between-floor ride (load/save + palette/audio shift; save is TODO-010).
+    /// Between-floor ride (autosave + palette/audio shift).
     ElevatorTransition,
-    /// Post-run ending screen (branches via [`EndingKind`](super::floor::EndingKind)).
+    /// Player died — reload or quit.
+    GameOver,
+    /// Options overlay (volume / CRT).
+    Options,
+    /// Credits scroll.
+    Credits,
+    /// Post-run ending (cinematic + text via [`EndingKind`](super::floor::EndingKind)).
     Ending,
 }

@@ -1,4 +1,5 @@
-// Floor 06 — Incinerator
+// Floor 06 — Incinerator (Hybrid / Green)
+// Puzzle: ash key → timed valve → race door → crate/vent flag → elev (+ Warden PA)
 FloorDef(
   number: 6,
   name: "Incinerator",
@@ -6,67 +7,79 @@ FloorDef(
   cluster: Hybrid,
   palette: Green,
   ambient_audio: "ambient/incinerator_roar",
-  intro_text: "Timed coolant valve — open it, then race the lock before it seals.",
-  player_spawn: (10.5, 12.5),
+  intro_text: "Timed coolant valve — open it, then race the lock before it seals. Something watches from above.",
+  player_spawn: (10.5, 13.5),
   player_yaw: -1.5707963267948966,
   rows: [
-    "####################",
-    "#..................#",
-    "#..##############..#",
-    "#..#............#..#",
-    "#..#....DD......#..#",
-    "#..#............#..#",
-    "#..######..######..#",
-    "#..................#",
-    "#....44........44..#",
-    "#..................#",
-    "#..MM..........MM..#",
-    "#..................#",
-    "#..................#",
-    "#..................#",
-    "####################",
+    "######################",
+    "#....................#",
+    "#..##############....#",
+    "#..#............#....#",
+    "##########DD##########",
+    "#....................#",
+    "#....44........44....#",
+    "#....................#",
+    "#..MM..........MM....#",
+    "#....................#",
+    "#.####..........####.#",
+    "#.#.............#..#.#",
+    "#.####..........####.#",
+    "#....................#",
+    "#....................#",
+    "######################",
   ],
   entities: [
     EntityDef(
-      pos: (8.5, 9.5),
+      pos: (8.5, 8.5),
       kind: Enemy(
         faction: Security,
         archetype: RiotGuard,
         scale: 1.05,
-        waypoints: [(7.5, 9.5), (12.5, 9.5)],
+        waypoints: [(6.5, 8.5), (14.5, 8.5)],
         yaw: 0.0,
       ),
     ),
     EntityDef(
-      pos: (14.5, 8.5),
+      pos: (15.5, 9.5),
       kind: Enemy(
         faction: Security,
         archetype: PatrolSecurity,
         scale: 0.9,
-        waypoints: [(13.5, 8.5), (15.5, 8.5), (15.5, 11.5), (13.5, 11.5)],
+        waypoints: [(13.5, 9.5), (17.5, 9.5), (17.5, 12.5), (13.5, 12.5)],
         yaw: 3.14159,
       ),
     ),
+    // North of burn door — push aside to reach vent override.
     EntityDef(
-      pos: (5.5, 8.5),
+      pos: (5.5, 3.5),
       kind: Crate(scale: 0.7),
     ),
     EntityDef(
-      pos: (10.5, 8.5),
+      pos: (10.5, 7.5),
       kind: Billboard(texture_id: 2, scale: 0.6),
     ),
     EntityDef(
-      pos: (6.5, 10.5),
+      pos: (17.5, 11.5),
+      kind: Interactable(
+        prompt: "Take ash-pit ignition key",
+        require: None,
+        action: SetFlag("ash_key"),
+        texture_id: Some(3),
+        scale: 0.45,
+      ),
+    ),
+    EntityDef(
+      pos: (6.5, 9.5),
       kind: Interactable(
         prompt: "Open coolant valve (timed)",
-        require: None,
-        action: TimedValve(flag: "valve_open", window_secs: 12.0),
+        require: Some("ash_key"),
+        action: TimedValve(flag: "valve_open", window_secs: 14.0),
         texture_id: None,
         scale: 0.5,
       ),
     ),
     EntityDef(
-      pos: (10.5, 4.5),
+      pos: (10.5, 5.5),
       kind: Interactable(
         prompt: "Cycle incinerator lock",
         require: Some("valve_open"),
@@ -76,14 +89,39 @@ FloorDef(
       ),
     ),
     EntityDef(
-      pos: (10.5, 13.2),
+      pos: (4.5, 3.5),
+      kind: Interactable(
+        prompt: "Force incinerator vent override",
+        require: Some("burn_open"),
+        action: SetFlag("incinerator_vented"),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    // Boss tease — PA foreshadows Floor 7 Warden.
+    EntityDef(
+      pos: (17.5, 6.5),
+      kind: Interactable(
+        prompt: "Trigger PA speaker",
+        require: None,
+        action: AnnouncePa(
+          text: "WARDEN TO ALL UNITS — flood basin armed. Trespassers will drown on my floor.",
+          duration: 5.0,
+        ),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 14.2),
       kind: Interactable(
         prompt: "Call elevator",
-        require: Some("burn_open"),
+        require: Some("burn_open && incinerator_vented"),
         action: CallElevator,
         texture_id: None,
         scale: 0.6,
       ),
     ),
   ],
+  wave_tuning: Some(WaveTuning(max_grunts: 3, cooldown_secs: 8.0)),
 )

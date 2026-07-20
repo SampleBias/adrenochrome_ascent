@@ -1,0 +1,61 @@
+// Ending cinematic — snowy mountain road with limos (TODO-040)
+FloorDef(
+  number: 99,
+  name: "Mountain Road",
+  subtitle: "Surface — Convoy",
+  cluster: Surface,
+  palette: Black,
+  ambient_audio: "ambient/night_wind",
+  intro_text: "The road out.",
+  player_spawn: (10.5, 12.5),
+  player_yaw: -1.5707963267948966,
+  rows: [
+    "######################",
+    "#....................#",
+    "#....................#",
+    "#..################..#",
+    "#..#..............#..#",
+    "#..#..............#..#",
+    "#..#....DDDD......#..#",
+    "#..#..............#..#",
+    "#..################..#",
+    "#....................#",
+    "#......MM....MM......#",
+    "#....................#",
+    "#....................#",
+    "#....................#",
+    "######################",
+  ],
+  entities: [
+    EntityDef(
+      pos: (8.5, 10.5),
+      kind: Enemy(
+        faction: Executive,
+        archetype: LimoDriver,
+        scale: 1.05,
+        waypoints: [(7.5, 10.5), (9.5, 10.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
+      pos: (12.5, 10.5),
+      kind: Enemy(
+        faction: Executive,
+        archetype: LimoDriver,
+        scale: 1.05,
+        waypoints: [(11.5, 10.5), (14.5, 10.5)],
+        yaw: 3.14159,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 6.5),
+      kind: Enemy(
+        faction: Executive,
+        archetype: Bodyguard,
+        scale: 1.1,
+        waypoints: [(9.5, 6.5), (11.5, 6.5)],
+        yaw: 1.5708,
+      ),
+    ),
+  ],
+)

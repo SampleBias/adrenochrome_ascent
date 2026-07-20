@@ -1,12 +1,15 @@
-//! Game flow: states, floors, elevator transitions.
+//! Game flow: states, floors, elevator transitions, settings.
 
 mod floor;
+mod settings;
 mod states;
 mod transitions;
 
 pub use floor::{resolve_ending_from_flags, CurrentFloor, EndingKind};
+pub use settings::{apply_crt_settings, apply_fullscreen_setting, GameSettings};
 pub use states::GameState;
 pub use transitions::{
-    ElevatorTimer, apply_floor_palette, enter_elevator, enter_in_game_spawn_player,
-    enter_main_menu_reset, flow_input, release_mouse, request_elevator, tick_elevator,
+    apply_floor_palette, enter_elevator, enter_in_game_spawn_player, enter_main_menu_reset,
+    flow_input, release_mouse, request_elevator, tick_elevator, watch_player_death, ElevatorTimer,
+    MenuCursor, OptionsReturn, SoftInGameResume,
 };

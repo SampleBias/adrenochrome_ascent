@@ -5,7 +5,7 @@ use bevy::prelude::*;
 
 use crate::enemy::{BossFight, FloorAlarm, ScientistFight, WardenOverrides};
 use crate::floor_loader::LoadedFloorInfo;
-use crate::game::{CurrentFloor, GameState};
+use crate::game::{CurrentFloor, GameSettings, GameState};
 use crate::player::{Player, PlayerMotor};
 use crate::puzzle::DnaSequencer;
 
@@ -56,13 +56,13 @@ impl AudioBank {
 }
 
 #[derive(Component)]
-struct MusicBed;
+pub(crate) struct MusicBed;
 
 #[derive(Component)]
-struct CombatBed;
+pub(crate) struct CombatBed;
 
 #[derive(Component)]
-struct AmbientBed;
+pub(crate) struct AmbientBed;
 
 #[derive(Component)]
 struct OneShotSfx;
@@ -104,9 +104,10 @@ pub fn load_audio_bank(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 /// Start cluster music + ambient when entering a floor.
-fn start_floor_audio(
+pub(crate) fn start_floor_audio(
     mut commands: Commands,
     bank: Res<AudioBank>,
+    settings: Res<GameSettings>,
     floor: Res<CurrentFloor>,
     floor_info: Res<LoadedFloorInfo>,
     mut pa: ResMut<PaAnnouncement>,
@@ -118,18 +119,19 @@ fn start_floor_audio(
         commands.entity(e).despawn();
     }
 
+    let music_vol = settings.music_volume.clamp(0.0, 1.0);
     let music_handle = bank.music_for_floor(floor.number);
     commands.spawn((
         Name::new("MusicBed"),
         MusicBed,
         AudioPlayer::new(music_handle),
-        PlaybackSettings::LOOP.with_volume(Volume::Linear(0.28)),
+        PlaybackSettings::LOOP.with_volume(Volume::Linear(music_vol)),
     ));
     commands.spawn((
         Name::new("AmbientBed"),
         AmbientBed,
         AudioPlayer::new(bank.ambient_hum.clone()),
-        PlaybackSettings::LOOP.with_volume(Volume::Linear(0.12)),
+        PlaybackSettings::LOOP.with_volume(Volume::Linear(music_vol * 0.45)),
     ));
 
     let line = if floor_info.intro_text.is_empty() {
@@ -157,6 +159,7 @@ fn stop_floor_audio(
 fn sync_combat_music(
     mut commands: Commands,
     bank: Res<AudioBank>,
+    settings: Res<GameSettings>,
     fight: Res<BossFight>,
     warden: Res<WardenOverrides>,
     scientist: Res<ScientistFight>,
@@ -169,11 +172,12 @@ fn sync_combat_music(
         || alarm.active;
     let playing = !combat.is_empty();
     if hot && !playing {
+        let vol = (settings.music_volume * 1.25).clamp(0.0, 1.0);
         commands.spawn((
             Name::new("CombatBed"),
             CombatBed,
             AudioPlayer::new(bank.music_combat.clone()),
-            PlaybackSettings::LOOP.with_volume(Volume::Linear(0.35)),
+            PlaybackSettings::LOOP.with_volume(Volume::Linear(vol)),
         ));
     } else if !hot && playing {
         for e in &combat {
@@ -186,6 +190,7 @@ fn play_footsteps(
     mut commands: Commands,
     time: Res<Time>,
     bank: Res<AudioBank>,
+    settings: Res<GameSettings>,
     floor: Res<CurrentFloor>,
     mut steps: ResMut<FootstepState>,
     player: Query<&PlayerMotor, With<Player>>,
@@ -208,11 +213,12 @@ fn play_footsteps(
         return;
     }
     steps.distance = 0.0;
+    let vol = (settings.sfx_volume * 0.82).clamp(0.0, 1.0);
     commands.spawn((
         Name::new("Footstep"),
         OneShotSfx,
         AudioPlayer::new(bank.foot_for_floor(floor.number)),
-        PlaybackSettings::DESPAWN.with_volume(Volume::Linear(0.45)),
+        PlaybackSettings::DESPAWN.with_volume(Volume::Linear(vol)),
     ));
 }
 
@@ -220,6 +226,7 @@ fn tick_pa_announcements(
     mut commands: Commands,
     time: Res<Time>,
     bank: Res<AudioBank>,
+    settings: Res<GameSettings>,
     mut pa: ResMut<PaAnnouncement>,
     dna: Res<DnaSequencer>,
     alarm: Res<FloorAlarm>,
@@ -227,11 +234,12 @@ fn tick_pa_announcements(
 ) {
     if pa.pending_voice {
         pa.pending_voice = false;
+        let vol = settings.sfx_volume.clamp(0.0, 1.0);
         commands.spawn((
             Name::new("PaVoice"),
             OneShotSfx,
             AudioPlayer::new(bank.pa_line.clone()),
-            PlaybackSettings::DESPAWN.with_volume(Volume::Linear(0.55)),
+            PlaybackSettings::DESPAWN.with_volume(Volume::Linear(vol)),
         ));
     }
     if pa.time_left > 0.0 {
@@ -284,10 +292,6 @@ impl Plugin for GameAudioPlugin {
         app.init_resource::<FootstepState>()
             .init_resource::<PaAnnouncement>()
             .add_systems(Startup, load_audio_bank)
-            .add_systems(
-                OnEnter(GameState::InGame),
-                start_floor_audio.after(crate::floor_loader::load_current_floor),
-            )
             .add_systems(OnExit(GameState::InGame), stop_floor_audio)
             .add_systems(
                 Update,

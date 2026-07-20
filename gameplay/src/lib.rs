@@ -31,9 +31,14 @@ impl Plugin for GameplayPlugin {
             .init_resource::<CurrentFloor>()
             .init_resource::<EndingKind>()
             .init_resource::<game::ElevatorTimer>()
+            .init_resource::<game::GameSettings>()
+            .init_resource::<game::MenuCursor>()
+            .init_resource::<game::OptionsReturn>()
+            .init_resource::<game::SoftInGameResume>()
             .init_resource::<PuzzleRegistry>()
             .init_resource::<interact::InteractionPrompt>()
             .init_resource::<save::ActiveSaveSlot>()
+            .init_resource::<save::PendingLoad>()
             .init_resource::<player::PainFlash>()
             .init_resource::<player::AdrenoVision>()
             .init_resource::<player::ScreenShake>()
@@ -47,6 +52,8 @@ impl Plugin for GameplayPlugin {
             .init_resource::<player::MutationPerks>()
             .init_resource::<hazard::TimedValveState>()
             .init_resource::<puzzle::DnaSequencer>()
+            .init_resource::<floor_loader::ActiveWaveTuning>()
+            .init_resource::<floor_loader::SkipFloorLoad>()
             .add_plugins((audio::GameAudioPlugin, ui::TerminalUiPlugin))
             .add_message::<interact::InteractAttempt>()
             .add_message::<enemy::PlayerDetected>()
@@ -76,12 +83,22 @@ impl Plugin for GameplayPlugin {
             .add_systems(
                 OnEnter(GameState::InGame),
                 (
-                    enemy::reset_floor_alarm,
-                    floor_loader::load_current_floor,
-                    game::enter_in_game_spawn_player,
-                    player::grant_mutation_perks,
-                    player::capture_mouse,
-                    ui::spawn_ingame_hud,
+                    (
+                        enemy::reset_floor_alarm,
+                        floor_loader::begin_ingame_enter,
+                        floor_loader::load_current_floor,
+                        floor_loader::floor9_limb_failsafe,
+                        save::apply_pending_load,
+                        game::enter_in_game_spawn_player,
+                    )
+                        .chain(),
+                    (
+                        player::grant_mutation_perks,
+                        player::capture_mouse,
+                        ui::spawn_ingame_hud,
+                        audio::start_floor_audio,
+                    )
+                        .chain(),
                 )
                     .chain(),
             )
@@ -104,17 +121,38 @@ impl Plugin for GameplayPlugin {
                 Update,
                 game::tick_elevator.run_if(in_state(GameState::ElevatorTransition)),
             )
-            // --- Ending ---
+            // --- Options / Credits / GameOver ---
+            .add_systems(
+                OnEnter(GameState::Options),
+                (game::release_mouse, ui::spawn_options_menu),
+            )
+            .add_systems(OnEnter(GameState::Credits), ui::spawn_credits)
+            .add_systems(
+                OnEnter(GameState::GameOver),
+                (game::release_mouse, ui::spawn_game_over),
+            )
+            // --- Ending cinematic (outdoor road + text) ---
             .add_systems(
                 OnEnter(GameState::Ending),
                 (
                     game::resolve_ending_from_flags,
+                    floor_loader::load_ending_cinematic,
                     game::release_mouse,
                     ui::spawn_ending,
                 )
                     .chain(),
             )
             .add_systems(Update, game::flow_input)
+            .add_systems(
+                Update,
+                (
+                    ui::sync_main_menu_cursor.run_if(in_state(GameState::MainMenu)),
+                    ui::sync_options_body.run_if(in_state(GameState::Options)),
+                    game::apply_crt_settings,
+                    game::apply_fullscreen_setting,
+                    game::watch_player_death.run_if(in_state(GameState::InGame)),
+                ),
+            )
             .add_systems(
                 Update,
                 (

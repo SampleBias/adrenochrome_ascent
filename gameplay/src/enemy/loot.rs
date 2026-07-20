@@ -36,42 +36,42 @@ pub fn roll_loot(faction: Faction, archetype: EnemyArchetype) -> Option<LootKind
         EnemyArchetype::Warden => return Some(LootKind::KeyFlag("warden_down".into())),
         EnemyArchetype::Scientist => return Some(LootKind::KeyFlag("scientist_down".into())),
         EnemyArchetype::Ceo => return Some(LootKind::KeyFlag("ceo_down".into())),
-        EnemyArchetype::Bodyguard => return Some(LootKind::Armor(15.0)),
-        EnemyArchetype::LimoDriver => return Some(LootKind::Shells(3)),
+        EnemyArchetype::Bodyguard => return Some(LootKind::Armor(10.0)),
+        EnemyArchetype::LimoDriver => return Some(LootKind::Shells(1)),
         EnemyArchetype::Heavy if matches!(faction, Faction::Mob) => {
-            return Some(LootKind::Shells(2));
+            return Some(LootKind::Shells(1));
         }
-        EnemyArchetype::RiotGuard => return Some(LootKind::Armor(20.0)),
-        EnemyArchetype::HazardTech => return Some(LootKind::Cells(6)),
+        EnemyArchetype::RiotGuard => return Some(LootKind::Armor(12.0)),
+        EnemyArchetype::HazardTech => return Some(LootKind::Cells(2)),
         EnemyArchetype::SerumZombie => return Some(LootKind::Adreno(1)),
-        EnemyArchetype::MutatedAide => return Some(LootKind::Health(12.0)),
+        EnemyArchetype::MutatedAide => return Some(LootKind::Health(8.0)),
         _ => {}
     }
 
     match faction {
         Faction::Mob => match archetype {
-            EnemyArchetype::Thug => Some(LootKind::Ammo9mm(6)),
-            EnemyArchetype::Zed => Some(LootKind::Health(15.0)),
-            EnemyArchetype::Heavy => Some(LootKind::Shells(2)),
+            EnemyArchetype::Thug => Some(LootKind::Ammo9mm(2)),
+            EnemyArchetype::Zed => Some(LootKind::Health(10.0)),
+            EnemyArchetype::Heavy => Some(LootKind::Shells(1)),
             EnemyArchetype::Lieutenant => Some(LootKind::KeyFlag("lieutenant_down".into())),
-            _ => Some(LootKind::Ammo9mm(4)),
+            _ => Some(LootKind::Ammo9mm(2)),
         },
         Faction::Security => match archetype {
-            EnemyArchetype::PatrolSecurity => Some(LootKind::Shells(3)),
+            EnemyArchetype::PatrolSecurity => Some(LootKind::Shells(1)),
             EnemyArchetype::Warden => Some(LootKind::KeyFlag("warden_down".into())),
-            _ => Some(LootKind::Shells(2)),
+            _ => Some(LootKind::Shells(1)),
         },
         Faction::Research => match archetype {
             EnemyArchetype::ResearcherMale | EnemyArchetype::ResearcherFemale => {
-                Some(LootKind::Cells(4))
+                Some(LootKind::Cells(2))
             }
             EnemyArchetype::Scientist => Some(LootKind::KeyFlag("scientist_down".into())),
-            _ => Some(LootKind::Cells(8)),
+            _ => Some(LootKind::Cells(2)),
         },
         Faction::Executive => match archetype {
-            EnemyArchetype::AdminSecretary => Some(LootKind::Cells(4)),
+            EnemyArchetype::AdminSecretary => Some(LootKind::Cells(1)),
             EnemyArchetype::Ceo => Some(LootKind::KeyFlag("ceo_down".into())),
-            _ => Some(LootKind::Ammo9mm(8)),
+            _ => Some(LootKind::Ammo9mm(3)),
         },
     }
 }

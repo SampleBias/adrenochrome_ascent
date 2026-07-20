@@ -5,6 +5,7 @@ use bevy::prelude::*;
 use adrenochrome_engine::Billboard;
 
 use crate::combat::CombatTarget;
+use crate::floor_loader::ActiveWaveTuning;
 use crate::player::{apply_damage, Armor, Health, PainFlash, Player, PlayerMotor};
 use crate::puzzle::PuzzleRegistry;
 
@@ -82,6 +83,7 @@ pub fn tick_warden_fight(
     mut commands: Commands,
     mut overrides: ResMut<WardenOverrides>,
     mut registry: ResMut<PuzzleRegistry>,
+    waves: Res<ActiveWaveTuning>,
     mut boss_q: Query<(
         &mut WardenBoss,
         &mut EnemyAi,
@@ -163,9 +165,15 @@ pub fn tick_warden_fight(
 
     boss.summon_cooldown -= dt;
     let grunt_count = grunts.iter().count();
-    if boss.summon_cooldown <= 0.0 && grunt_count < 3 {
-        spawn_security_wave(&mut commands, overrides.arena_center, overrides.phase);
-        boss.summon_cooldown = 9.0;
+    let max_grunts = waves.max_grunts as usize;
+    if boss.summon_cooldown <= 0.0 && grunt_count < max_grunts {
+        spawn_security_wave(
+            &mut commands,
+            overrides.arena_center,
+            overrides.phase,
+            waves.max_grunts,
+        );
+        boss.summon_cooldown = waves.cooldown_secs.max(5.0);
     }
 
     if ai.state == EnemyState::Attack {
@@ -175,9 +183,14 @@ pub fn tick_warden_fight(
     }
 }
 
-fn spawn_security_wave(commands: &mut Commands, center: Vec2, phase: u8) {
-    let offsets = [Vec2::new(-2.0, 1.5), Vec2::new(2.0, 1.5), Vec2::new(0.0, -2.2)];
-    let count = (phase.max(1)).min(3) as usize;
+fn spawn_security_wave(commands: &mut Commands, center: Vec2, phase: u8, max_grunts: u8) {
+    let offsets = [
+        Vec2::new(-2.0, 1.5),
+        Vec2::new(2.0, 1.5),
+        Vec2::new(0.0, -2.2),
+        Vec2::new(1.5, 0.0),
+    ];
+    let count = (phase.max(1)).min(max_grunts.max(1)) as usize;
     for (i, off) in offsets.iter().take(count).enumerate() {
         let archetype = match i % 3 {
             0 => EnemyArchetype::PatrolSecurity,

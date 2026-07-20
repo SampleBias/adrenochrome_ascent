@@ -19,7 +19,7 @@ pub mod textures;
 pub use billboard::{Billboard, HandOverlay};
 pub use crt_material::{
     set_crt_post_fx, update_crt_palette, update_crt_time, CrtFullscreenQuad, CrtMaterial,
-    UpscaleCamera,
+    UpscaleCamera, DEFAULT_DITHER, DEFAULT_SCANLINE, DEFAULT_VIGNETTE,
 };
 pub use map::MapGrid;
 pub use palette::{ActivePalette, Palette, RENDER_HEIGHT, RENDER_WIDTH};

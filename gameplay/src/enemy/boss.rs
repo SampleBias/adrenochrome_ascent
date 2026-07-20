@@ -5,6 +5,7 @@ use bevy::prelude::*;
 use adrenochrome_engine::Billboard;
 
 use crate::combat::{CombatTarget, HitFlash};
+use crate::floor_loader::ActiveWaveTuning;
 use crate::player::{apply_damage, Armor, Health, PainFlash, Player, PlayerMotor};
 use crate::puzzle::PuzzleRegistry;
 
@@ -85,6 +86,7 @@ pub fn tick_boss_fight(
     mut commands: Commands,
     mut fight: ResMut<BossFight>,
     mut registry: ResMut<PuzzleRegistry>,
+    waves: Res<ActiveWaveTuning>,
     mut boss_q: Query<(
         &mut LieutenantBoss,
         &mut EnemyAi,
@@ -130,10 +132,11 @@ pub fn tick_boss_fight(
     fight.wave_timer -= dt;
 
     let grunt_count = grunts.iter().count();
-    if boss.summon_cooldown <= 0.0 && grunt_count < 3 && fight.phase < 4 {
+    let max_grunts = waves.max_grunts as usize;
+    if boss.summon_cooldown <= 0.0 && grunt_count < max_grunts && fight.phase < 4 {
         let wave = fight.phase.max(1);
-        spawn_wave(&mut commands, fight.arena_center, wave);
-        boss.summon_cooldown = 8.0 - wave as f32 * 0.5;
+        spawn_wave(&mut commands, fight.arena_center, wave, waves.max_grunts);
+        boss.summon_cooldown = (waves.cooldown_secs - wave as f32 * 0.5).max(4.0);
         fight.wave_timer = 6.0;
         info!("Lieutenant summoned wave {wave}");
     }
@@ -148,13 +151,14 @@ pub fn tick_boss_fight(
     }
 }
 
-fn spawn_wave(commands: &mut Commands, center: Vec2, wave: u8) {
+fn spawn_wave(commands: &mut Commands, center: Vec2, wave: u8, max_grunts: u8) {
     let offsets = [
         Vec2::new(-2.5, 1.5),
         Vec2::new(2.5, 1.5),
         Vec2::new(0.0, -2.0),
+        Vec2::new(-1.5, -1.5),
     ];
-    let count = wave.clamp(1, 3) as usize;
+    let count = wave.clamp(1, max_grunts.max(1)) as usize;
     for (i, off) in offsets.iter().take(count).enumerate() {
         let archetype = match (wave + i as u8) % 3 {
             0 => EnemyArchetype::Thug,

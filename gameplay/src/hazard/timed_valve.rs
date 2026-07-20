@@ -39,20 +39,32 @@ pub fn arm_timed_valve_from_interact(
 }
 
 /// Tick windows; clear flags when expired.
+/// Warden valve flags stay sticky while combat is paused (TODO-038 softlock).
 pub fn tick_timed_valves(
     time: Res<Time>,
     mut valves: ResMut<TimedValveState>,
     mut registry: ResMut<PuzzleRegistry>,
+    warden: Res<crate::enemy::WardenOverrides>,
 ) {
     let dt = time.delta_secs();
     let mut expired = Vec::new();
     for (flag, remaining) in valves.active.iter_mut() {
+        // Hold open during Warden valve phases so the window can't softlock the fight.
+        if warden.combat_paused && flag.starts_with("warden_valve_") {
+            continue;
+        }
         *remaining -= dt;
         if *remaining <= 0.0 {
             expired.push(flag.clone());
         }
     }
-    valves.active.retain(|(_, t)| *t > 0.0);
+    valves.active.retain(|(flag, t)| {
+        if warden.combat_paused && flag.starts_with("warden_valve_") {
+            true
+        } else {
+            *t > 0.0
+        }
+    });
     for flag in expired {
         registry.set(&flag, false);
         info!("Timed valve '{flag}' sealed (window expired)");

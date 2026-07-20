@@ -1,4 +1,4 @@
-//! Autosave on elevator rides — 10 RON slots (TODO-010 / Sprint 3–7).
+//! Autosave on elevator rides + load-game wiring (TODO-010 / TODO-038 / TODO-040).
 
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use adrenochrome_engine::RayCamera;
+use adrenochrome_engine::{MapGrid, RayCamera};
 
 use crate::enemy::{Faction, FactionRegistry};
 use crate::game::{CurrentFloor, EndingKind};
@@ -31,6 +31,12 @@ impl ActiveSaveSlot {
     pub fn path(self) -> PathBuf {
         PathBuf::from("saves").join(format!("slot_{:02}.ron", self.slot.clamp(1, 10)))
     }
+}
+
+/// Queued save to apply after the next floor load (TODO-040).
+#[derive(Resource, Debug, Clone, Default)]
+pub struct PendingLoad {
+    pub save: Option<SaveGame>,
 }
 
 /// Serializable run state written during elevator transitions.
@@ -119,8 +125,8 @@ pub fn write_save(path: &Path, save: &SaveGame) -> Result<(), String> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
-    let pretty = ron::ser::PrettyConfig::new().depth_limit(4);
-    let text = ron::ser::to_string_pretty(save, pretty).map_err(|e| e.to_string())?;
+    // Compact RON for ship (TODO-039) — faster than pretty for large flag maps.
+    let text = ron::ser::to_string(save).map_err(|e| e.to_string())?;
     std::fs::write(path, text).map_err(|e| e.to_string())
 }
 
@@ -129,8 +135,59 @@ pub fn read_save(path: &Path) -> Result<SaveGame, String> {
     ron::from_str(&text).map_err(|e| e.to_string())
 }
 
-/// Apply a save into live resources (for future Load Game UI).
-#[allow(dead_code)]
+/// Queue the active slot for apply-after-load (called from menu / game over).
+pub fn queue_load_from_slot(slot: ActiveSaveSlot, pending: &mut PendingLoad) -> bool {
+    match read_save(&slot.path()) {
+        Ok(save) => {
+            pending.save = Some(save);
+            true
+        }
+        Err(e) => {
+            warn!("queue load failed: {e}");
+            pending.save = None;
+            false
+        }
+    }
+}
+
+/// Apply pending save into live resources after the floor has been loaded.
+pub fn apply_pending_load(
+    mut pending: ResMut<PendingLoad>,
+    mut floor: ResMut<CurrentFloor>,
+    mut ending: ResMut<EndingKind>,
+    mut registry: ResMut<PuzzleRegistry>,
+    mut perks: ResMut<MutationPerks>,
+    mut factions: ResMut<FactionRegistry>,
+    mut camera: ResMut<RayCamera>,
+    mut map: ResMut<MapGrid>,
+    mut players: Query<
+        (
+            &mut PlayerMotor,
+            &mut Health,
+            &mut Armor,
+            &mut Inventory,
+            &mut WeaponLoadout,
+        ),
+        With<Player>,
+    >,
+) {
+    let Some(save) = pending.save.take() else {
+        return;
+    };
+    apply_save(
+        &save,
+        &mut floor,
+        &mut ending,
+        &mut registry,
+        &mut perks,
+        &mut factions,
+        &mut camera,
+        &mut players,
+    );
+    rehydrate_doors_from_flags(&registry, &mut map);
+    info!("Applied save slot {} @ floor {}", save.slot, save.floor);
+}
+
 pub fn apply_save(
     save: &SaveGame,
     floor: &mut CurrentFloor,
@@ -163,10 +220,45 @@ pub fn apply_save(
         motor.pos = pos;
         motor.yaw = save.player_yaw;
         motor.velocity = Vec2::ZERO;
-        health.current = save.health;
+        health.current = save.health.max(1.0);
         armor.current = save.armor;
         *inventory = save.inventory.clone();
         loadout.current = save.weapon;
+    }
+}
+
+/// Re-open doors whose completion flags are already set (TODO-038 save/load).
+pub fn rehydrate_doors_from_flags(registry: &PuzzleRegistry, map: &mut MapGrid) {
+    // Known door hubs keyed by flag → cell (from authored floors).
+    let doors: &[(&str, (i32, i32))] = &[
+        ("bay_open", (12, 5)),
+        ("gate_open", (12, 5)),
+        ("vault_open", (12, 9)),
+        ("lab_open", (10, 4)),
+        ("aisle_open", (9, 4)),
+        ("burn_open", (10, 4)),
+        ("basin_open", (10, 4)),
+        ("exec_open", (12, 4)),
+        ("pent_open", (12, 4)),
+        ("surface_open", (11, 5)),
+    ];
+    for (flag, cell) in doors {
+        if registry.get(flag) {
+            open_door_cells(map, cell.0, cell.1);
+        }
+    }
+}
+
+fn open_door_cells(map: &mut MapGrid, x: i32, y: i32) {
+    for (dx, dy) in [(0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)] {
+        let cx = x + dx;
+        let cy = y + dy;
+        if cx < 0 || cy < 0 {
+            continue;
+        }
+        if map.get(cx as isize, cy as isize) != 0 {
+            map.set(cx as usize, cy as usize, 0);
+        }
     }
 }
 

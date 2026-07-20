@@ -74,11 +74,11 @@ pub fn weapon_stats(id: WeaponId) -> WeaponStats {
         WeaponId::Plasma => WeaponStats {
             id,
             name: "Plasma Rifle",
-            damage: 16.0,
+            damage: 14.0,
             pellets: 1,
             spread: 0.02,
             range: 22.0,
-            cooldown: 0.12,
+            cooldown: 0.22,
             ammo: AmmoType::Cell,
             ammo_per_shot: 1,
             hand_texture: 8,
@@ -91,7 +91,7 @@ pub fn weapon_stats(id: WeaponId) -> WeaponStats {
             pellets: 0,
             spread: 0.0,
             range: 0.0,
-            cooldown: 0.5,
+            cooldown: 0.85,
             ammo: AmmoType::Adreno,
             ammo_per_shot: 1,
             hand_texture: 10,
@@ -130,7 +130,7 @@ impl Default for AdrenoVision {
         Self {
             active: false,
             time_left: 0.0,
-            drain_per_sec: 8.0,
+            drain_per_sec: 10.0,
         }
     }
 }

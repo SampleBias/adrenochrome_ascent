@@ -1,4 +1,4 @@
-// Floor 08 — Research Approach
+// Floor 08 — Research Approach (Sprint 9 Surface)
 FloorDef(
   number: 8,
   name: "Research Approach",
@@ -6,91 +6,146 @@ FloorDef(
   cluster: Surface,
   palette: Teal,
   ambient_audio: "ambient/sterile_hall",
-  intro_text: "Researchers flee. Executives watch. Collect three limbs — and choose who to free.",
-  player_spawn: (10.5, 12.5),
+  intro_text: "Scavenge three biometric limbs. Executives watch the approach. The Scientist's mail is already waiting.",
+  player_spawn: (12.5, 15.5),
   player_yaw: -1.5707963267948966,
+  wave_tuning: Some(WaveTuning(max_grunts: 4, cooldown_secs: 6.5)),
   rows: [
-    "####################",
-    "#..................#",
-    "#..................#",
-    "#.####.DD.########.#",
-    "#.#..............#.#",
-    "#.#......MM......#.#",
-    "#.#..............#.#",
-    "#.####........####.#",
-    "#..................#",
-    "#..55..........55..#",
-    "#..................#",
-    "#.####........####.#",
-    "#..................#",
-    "#..................#",
-    "####################",
+    "########################",
+    "#......................#",
+    "#..55..............55..#",
+    "#......................#",
+    "###########DD###########",
+    "#......................#",
+    "#.####............####.#",
+    "#.#..................#.#",
+    "#.#......MM..........#.#",
+    "#.#..................#.#",
+    "#.####............####.#",
+    "#......................#",
+    "#..MM..............MM..#",
+    "#......................#",
+    "#.####............####.#",
+    "#......................#",
+    "########################",
   ],
   entities: [
+    // --- Combat: Research + Executive ---
     EntityDef(
-      pos: (6.5, 9.5),
+      pos: (5.5, 12.5),
       kind: Enemy(
         faction: Research,
         archetype: ResearcherMale,
         scale: 0.9,
-        waypoints: [(5.5, 9.5), (8.5, 9.5)],
+        waypoints: [(4.5, 12.5), (8.5, 12.5), (8.5, 11.5), (4.5, 11.5)],
         yaw: 0.0,
       ),
     ),
     EntityDef(
-      pos: (14.5, 9.5),
+      pos: (18.5, 12.5),
       kind: Enemy(
         faction: Research,
         archetype: ResearcherFemale,
         scale: 0.9,
-        waypoints: [(13.5, 9.5), (15.5, 9.5)],
+        waypoints: [(16.5, 12.5), (20.5, 12.5)],
         yaw: 3.14159,
       ),
     ),
     EntityDef(
-      pos: (8.5, 5.5),
+      pos: (12.5, 9.5),
       kind: Enemy(
         faction: Research,
         archetype: MutatedAide,
         scale: 0.95,
-        waypoints: [(7.5, 5.5), (12.5, 5.5)],
+        waypoints: [(8.5, 9.5), (16.5, 9.5), (16.5, 7.5), (8.5, 7.5)],
         yaw: 0.0,
-      ),
-    ),
-    EntityDef(
-      pos: (12.5, 11.5),
-      kind: Enemy(
-        faction: Executive,
-        archetype: AdminSecretary,
-        scale: 0.85,
-        waypoints: [(11.5, 11.5), (14.5, 11.5)],
-        yaw: 3.14159,
       ),
     ),
     EntityDef(
       pos: (7.5, 7.5),
       kind: Enemy(
-        faction: Executive,
-        archetype: Bodyguard,
-        scale: 1.1,
-        waypoints: [(6.5, 7.5), (9.5, 7.5)],
+        faction: Research,
+        archetype: ResearcherMale,
+        scale: 0.9,
+        waypoints: [(5.5, 7.5), (9.5, 7.5)],
         yaw: 0.0,
       ),
     ),
     EntityDef(
-      pos: (5.5, 8.5),
+      pos: (16.5, 8.5),
+      kind: Enemy(
+        faction: Executive,
+        archetype: Bodyguard,
+        scale: 1.1,
+        waypoints: [(14.5, 8.5), (19.5, 8.5)],
+        yaw: 3.14159,
+      ),
+    ),
+    EntityDef(
+      pos: (4.5, 14.5),
+      kind: Enemy(
+        faction: Executive,
+        archetype: AdminSecretary,
+        scale: 0.85,
+        waypoints: [(3.5, 14.5), (7.5, 14.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
+      pos: (19.5, 14.5),
+      kind: Enemy(
+        faction: Executive,
+        archetype: Bodyguard,
+        scale: 1.1,
+        waypoints: [(17.5, 14.5), (21.5, 14.5)],
+        yaw: 3.14159,
+      ),
+    ),
+    // --- Limb scavenger (need 3 for biometrics) ---
+    EntityDef(
+      pos: (4.5, 8.5),
       kind: Limb(amount: 1, scale: 0.4),
     ),
     EntityDef(
-      pos: (15.5, 8.5),
+      pos: (20.5, 8.5),
       kind: Limb(amount: 1, scale: 0.4),
     ),
     EntityDef(
-      pos: (10.5, 10.5),
+      pos: (12.5, 11.5),
       kind: Limb(amount: 1, scale: 0.4),
     ),
+    // --- Puzzle 1: Scientist tease (email terminal) ---
     EntityDef(
-      pos: (4.5, 11.5),
+      pos: (20.5, 14.5),
+      kind: Interactable(
+        prompt: "Read intercepted research email",
+        require: None,
+        action: OpenTerminal(
+          title: "INBOX — dr.hale@surface.lab",
+          body: "Subject: Sequence lock / roof clearance\n\nAides: biometric harvest is behind schedule.\nI will finish the primary strand on the surface myself.\nDo not let Executive touch my sequencers.\n\n— H.\n\nP.S. The CEO wants a private convoy. Ignore him.",
+          set_flag: Some("read_scientist_mail"),
+        ),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    // --- Puzzle 1b: PA foreshadow ---
+    EntityDef(
+      pos: (3.5, 11.5),
+      kind: Interactable(
+        prompt: "Tap corridor PA speaker",
+        require: None,
+        action: AnnouncePa(
+          text: "DR. HALE TO SURFACE LAB — SEQUENCE WINDOW OPENING.",
+          duration: 4.5,
+        ),
+        texture_id: None,
+        scale: 0.45,
+      ),
+    ),
+    // --- Optional moral: release subjects ---
+    EntityDef(
+      pos: (3.5, 5.5),
       kind: Interactable(
         prompt: "Release containment subjects",
         require: None,
@@ -99,18 +154,20 @@ FloorDef(
         scale: 0.5,
       ),
     ),
+    // --- Puzzle 2–3: biometric door (collected_limb >= 3) ---
     EntityDef(
-      pos: (10.5, 3.5),
+      pos: (12.5, 5.5),
       kind: Interactable(
-        prompt: "Biometric door (3 limbs)",
+        prompt: "Biometric door (requires 3 limbs)",
         require: Some("collected_limb >= 3"),
-        action: OpenDoor(cell:(10,3), flag:Some("exec_open")),
+        action: OpenDoor(cell:(12,4), flag:Some("exec_open")),
         texture_id: None,
         scale: 0.5,
       ),
     ),
+    // --- Puzzle 4: elevator (flag from biometric) ---
     EntityDef(
-      pos: (10.5, 13.2),
+      pos: (12.5, 15.8),
       kind: Interactable(
         prompt: "Call elevator",
         require: Some("exec_open"),

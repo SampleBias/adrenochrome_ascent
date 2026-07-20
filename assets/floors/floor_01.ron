@@ -1,4 +1,4 @@
-// Floor 01 — Awakening
+// Floor 01 — Awakening (TODO-035/036)
 FloorDef(
   number: 1,
   name: "Awakening",
@@ -6,45 +6,47 @@ FloorDef(
   cluster: Human,
   palette: Red,
   ambient_audio: "ambient/basement_hum",
-  intro_text: "Restraints loose. A Mob thug patrols the bay. Find the terminal.",
-  player_spawn: (10.5, 12.5),
+  intro_text: "Restraints loose. One Mob thug prowls the bay. Keycard, breaker, then the security mail — the Lieutenant is already watching.",
+  player_spawn: (11.5, 14.5),
   player_yaw: -1.5707963267948966,
   rows: [
-    "####################",
-    "#..................#",
-    "#..22......55......#",
-    "#..22......55......#",
-    "#..................#",
-    "#........4.........#",
-    "#..................#",
-    "#.####........####.#",
-    "#.#..#........#..#.#",
-    "#.#..#...DD...#..#.#",
-    "#.####........####.#",
-    "#..................#",
-    "#..MM..........MM..#",
-    "#..................#",
-    "####################",
+    "########################",
+    "#......................#",
+    "#.####..........####...#",
+    "#.#...............#....#",
+    "#.#...............#....#",
+    "############DD##########",
+    "#......................#",
+    "#..22..............55..#",
+    "#......................#",
+    "#.####.................#",
+    "#.#....................#",
+    "#.#...........####.....#",
+    "#.####........#..#.....#",
+    "#.............#..#.....#",
+    "#.............####.....#",
+    "#......................#",
+    "########################",
   ],
   entities: [
     EntityDef(
-      pos: (10.5, 6.5),
+      pos: (11.5, 7.5),
       kind: Enemy(
         faction: Mob,
         archetype: Thug,
         scale: 0.95,
-        waypoints: [(8.5, 6.5), (12.5, 6.5), (12.5, 4.5), (8.5, 4.5)],
+        waypoints: [(8.5, 7.5), (14.5, 7.5), (14.5, 9.5), (8.5, 9.5)],
         yaw: 0.0,
       ),
     ),
     EntityDef(
-      pos: (14.5, 8.5),
+      pos: (14.5, 12.5),
       kind: Billboard(texture_id: 2, scale: 0.7),
     ),
     EntityDef(
-      pos: (3.5, 8.5),
+      pos: (3.5, 10.5),
       kind: Interactable(
-        prompt: "Pick up keycard",
+        prompt: "Pick up med-bay keycard",
         require: None,
         action: SetFlag("has_keycard"),
         texture_id: Some(3),
@@ -52,23 +54,33 @@ FloorDef(
       ),
     ),
     EntityDef(
-      pos: (10.5, 9.5),
+      pos: (12.5, 6.5),
       kind: Interactable(
-        prompt: "Use bay door",
+        prompt: "Swipe keycard — bay door",
         require: Some("has_keycard"),
-        action: OpenDoor(cell:(10,9), flag:Some("bay_open")),
+        action: OpenDoor(cell: (12, 5), flag: Some("bay_open")),
         texture_id: None,
         scale: 0.5,
       ),
     ),
     EntityDef(
-      pos: (16.5, 12.5),
+      pos: (3.5, 3.5),
       kind: Interactable(
-        prompt: "Use security terminal",
-        require: Some("has_keycard"),
+        prompt: "Flip main breaker",
+        require: Some("bay_open"),
+        action: SetFlag("power_restored"),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
+      pos: (17.5, 3.5),
+      kind: Interactable(
+        prompt: "Read security email terminal",
+        require: Some("power_restored"),
         action: OpenTerminal(
-          title: "SECURITY TERMINAL",
-          body: "Bay lock override.\nConfirm uplink to unlock the service elevator.",
+          title: "SECURITY MAIL — PRIORITY",
+          body: "FROM: lt.vargas@mob.internal\nTO: bay-sec\nSUBJ: Cleanup schedule\n\nThugs are disposable. I am not.\nFinish the bay, then report to flooded cells.\n— Lieutenant Vargas\n\n[elevator unlock authorized]",
           set_flag: Some("elevator_unlocked"),
         ),
         texture_id: None,
@@ -76,7 +88,20 @@ FloorDef(
       ),
     ),
     EntityDef(
-      pos: (10.5, 13.2),
+      pos: (8.5, 8.5),
+      kind: Interactable(
+        prompt: "Listen to PA speaker",
+        require: Some("bay_open"),
+        action: AnnouncePa(
+          text: "PA: Lieutenant Vargas to flooded cells. Bring the cigar case.",
+          duration: 4.0,
+        ),
+        texture_id: None,
+        scale: 0.45,
+      ),
+    ),
+    EntityDef(
+      pos: (11.5, 15.2),
       kind: Interactable(
         prompt: "Call elevator",
         require: Some("elevator_unlocked"),
@@ -86,4 +111,8 @@ FloorDef(
       ),
     ),
   ],
+  wave_tuning: Some(WaveTuning(
+    max_grunts: 2,
+    cooldown_secs: 9.5,
+  )),
 )

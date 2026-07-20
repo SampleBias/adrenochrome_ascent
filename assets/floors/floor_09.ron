@@ -1,4 +1,4 @@
-// Floor 09 — Serum Ward
+// Floor 09 — Serum Ward (Sprint 9 Surface)
 FloorDef(
   number: 9,
   name: "Serum Ward",
@@ -6,83 +6,157 @@ FloorDef(
   cluster: Surface,
   palette: Teal,
   ambient_audio: "ambient/wind_glass",
-  intro_text: "Serum ward under Executive lock. Night vision settles in. Unlock the roof.",
-  player_spawn: (10.5, 12.5),
+  intro_text: "Serum ward under Executive lock. Biometrics from below still count. Unlock the penthouse — the roof is listening.",
+  player_spawn: (12.5, 14.5),
   player_yaw: -1.5707963267948966,
+  wave_tuning: Some(WaveTuning(max_grunts: 4, cooldown_secs: 6.5)),
   rows: [
-    "####################",
-    "#..................#",
-    "#..##############..#",
-    "#..#............#..#",
-    "#..#....DD......#..#",
-    "#..#............#..#",
-    "#..######..######..#",
-    "#..................#",
-    "#..................#",
-    "#..MM..........MM..#",
-    "#..................#",
-    "#.####........####.#",
-    "#..................#",
-    "#..................#",
-    "####################",
+    "########################",
+    "#......................#",
+    "#..55..............55..#",
+    "#......................#",
+    "###########DD###########",
+    "#......................#",
+    "#..####..........####..#",
+    "#..#................#..#",
+    "#..#......MM........#..#",
+    "#..#................#..#",
+    "#..####..........####..#",
+    "#......................#",
+    "#..MM..............MM..#",
+    "#......................#",
+    "#......................#",
+    "########################",
   ],
   entities: [
+    // --- Combat: serum + aide + executive ---
     EntityDef(
-      pos: (8.5, 9.5),
+      pos: (7.5, 12.5),
       kind: Enemy(
         faction: Research,
         archetype: SerumZombie,
         scale: 1.1,
-        waypoints: [(7.5, 9.5), (12.5, 9.5)],
+        waypoints: [(5.5, 12.5), (11.5, 12.5)],
         yaw: 0.0,
       ),
     ),
     EntityDef(
-      pos: (14.5, 8.5),
+      pos: (17.5, 11.5),
       kind: Enemy(
         faction: Research,
         archetype: SerumZombie,
         scale: 1.05,
-        waypoints: [(13.5, 8.5), (15.5, 8.5), (15.5, 11.5)],
+        waypoints: [(15.5, 11.5), (20.5, 11.5), (20.5, 13.5), (15.5, 13.5)],
         yaw: 3.14159,
       ),
     ),
     EntityDef(
-      pos: (6.5, 5.5),
+      pos: (12.5, 8.5),
       kind: Enemy(
         faction: Research,
         archetype: MutatedAide,
         scale: 0.95,
-        waypoints: [(5.5, 5.5), (8.5, 5.5)],
+        waypoints: [(8.5, 8.5), (16.5, 8.5), (16.5, 6.5), (8.5, 6.5)],
         yaw: 0.0,
       ),
     ),
     EntityDef(
-      pos: (12.5, 11.5),
+      pos: (5.5, 7.5),
+      kind: Enemy(
+        faction: Research,
+        archetype: SerumZombie,
+        scale: 1.05,
+        waypoints: [(4.5, 7.5), (7.5, 7.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
+      pos: (18.5, 7.5),
       kind: Enemy(
         faction: Executive,
         archetype: Bodyguard,
         scale: 1.1,
-        waypoints: [(11.5, 11.5), (14.5, 11.5)],
-        yaw: 0.0,
+        waypoints: [(16.5, 7.5), (20.5, 7.5)],
+        yaw: 3.14159,
       ),
     ),
     EntityDef(
-      pos: (5.5, 10.5),
+      pos: (4.5, 13.5),
       kind: Enemy(
         faction: Executive,
         archetype: AdminSecretary,
         scale: 0.85,
-        waypoints: [(4.5, 10.5), (7.5, 10.5)],
+        waypoints: [(3.5, 13.5), (7.5, 13.5)],
         yaw: 0.0,
       ),
     ),
     EntityDef(
-      pos: (10.5, 8.5),
-      kind: Billboard(texture_id: 2, scale: 0.65),
+      pos: (20.5, 13.5),
+      kind: Enemy(
+        faction: Executive,
+        archetype: Bodyguard,
+        scale: 1.1,
+        waypoints: [(18.5, 13.5), (21.5, 13.5)],
+        yaw: 3.14159,
+      ),
     ),
     EntityDef(
-      pos: (15.5, 5.5),
+      pos: (15.5, 12.5),
+      kind: Billboard(texture_id: 2, scale: 0.65),
+    ),
+    // --- Puzzle 1: CEO / Scientist PA tease ---
+    EntityDef(
+      pos: (3.5, 11.5),
+      kind: Interactable(
+        prompt: "Trigger ward PA overlay",
+        require: None,
+        action: AnnouncePa(
+          text: "CEO CONVOY ON STANDBY — DR. HALE: DO NOT DELAY THE SEQUENCE.",
+          duration: 5.0,
+        ),
+        texture_id: None,
+        scale: 0.45,
+      ),
+    ),
+    EntityDef(
+      pos: (20.5, 5.5),
+      kind: Interactable(
+        prompt: "Read penthouse routing memo",
+        require: None,
+        action: OpenTerminal(
+          title: "EXEC ROUTING — ROOF",
+          body: "Penthouse lock accepts limb residue from Research Approach.\nHale is already on the surface with the primary sequencer.\nCEO will meet whoever clears the ward.\n\n— Admin pool",
+          set_flag: Some("read_penthouse_memo"),
+        ),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    // --- Puzzle 2: roof uplink (cross-floor: limbs / F8 biometric) ---
+    EntityDef(
+      pos: (12.5, 12.5),
+      kind: Interactable(
+        prompt: "Unlock roof uplink (need limb residue or F8 biometric)",
+        require: Some("collected_limb >= 1 || exec_open"),
+        action: SetFlag("elevator_unlocked"),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    // --- Optional side: DNA sequencer ---
+    EntityDef(
+      pos: (5.5, 5.5),
+      kind: Interactable(
+        prompt: "Ward DNA sequencer (optional)",
+        require: None,
+        action: StartPuzzle("scientist_dna_manual"),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    // --- Optional moral: spare researchers ---
+    EntityDef(
+      pos: (18.5, 9.5),
       kind: Interactable(
         prompt: "Wipe research logs (spare researchers)",
         require: None,
@@ -91,28 +165,20 @@ FloorDef(
         scale: 0.5,
       ),
     ),
+    // --- Puzzle 3: penthouse door ---
     EntityDef(
-      pos: (10.5, 9.5),
-      kind: Interactable(
-        prompt: "Unlock roof uplink",
-        require: None,
-        action: SetFlag("elevator_unlocked"),
-        texture_id: None,
-        scale: 0.5,
-      ),
-    ),
-    EntityDef(
-      pos: (10.5, 4.5),
+      pos: (12.5, 5.5),
       kind: Interactable(
         prompt: "Open penthouse door",
         require: Some("elevator_unlocked"),
-        action: OpenDoor(cell:(10,4), flag:Some("pent_open")),
+        action: OpenDoor(cell:(12,4), flag:Some("pent_open")),
         texture_id: None,
         scale: 0.5,
       ),
     ),
+    // --- Puzzle 4: elevator ---
     EntityDef(
-      pos: (10.5, 13.2),
+      pos: (12.5, 14.8),
       kind: Interactable(
         prompt: "Call elevator",
         require: Some("pent_open"),
