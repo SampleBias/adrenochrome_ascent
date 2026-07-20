@@ -97,13 +97,13 @@ pub fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                         TextColor(Color::srgb(0.98, 0.98, 0.92)),
                     ));
                     top.spawn((
-                        Text::new("- BASEMENT TO VOID -"),
+                        Text::new("- ESCAPE TO SURVIVE -"),
                         tag.clone(),
                         TextColor(Color::srgb(0.45, 0.85, 0.75)),
                     ));
                 });
 
-            // Mid: menu rows with NES ▶ cursor.
+            // Mid: menu rows with NES cursor.
             parent
                 .spawn((
                     Node {
@@ -141,7 +141,7 @@ pub fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                         TextColor(Color::srgb(0.98, 0.98, 0.85)),
                     ));
                     bot.spawn((
-                        Text::new("(C) 1989 VOIDSOFT  LICENSED TO HORROR"),
+                        Text::new("2026 SYNLBS Licensed to Horror"),
                         micro.clone(),
                         TextColor(Color::srgb(0.55, 0.52, 0.58)),
                     ));
