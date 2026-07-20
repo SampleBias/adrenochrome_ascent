@@ -81,6 +81,24 @@ impl EndingKind {
             }
         }
     }
+
+    /// Resolve ending from moral flags / score (TODO-029 / TODO-031).
+    pub fn from_registry(registry: &crate::puzzle::PuzzleRegistry) -> Self {
+        if registry.get("subjects_released") || registry.counter("moral_score") >= 3 {
+            Self::Released
+        } else {
+            Self::Contained
+        }
+    }
+}
+
+/// Sync [`EndingKind`] from puzzle flags when entering the Ending state.
+pub fn resolve_ending_from_flags(
+    registry: Res<crate::puzzle::PuzzleRegistry>,
+    mut ending: ResMut<EndingKind>,
+) {
+    *ending = EndingKind::from_registry(&registry);
+    info!("Ending resolved: {:?}", *ending);
 }
 
 #[cfg(test)]

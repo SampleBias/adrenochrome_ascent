@@ -5,11 +5,14 @@ use bevy::prelude::*;
 use adrenochrome_engine::{cast_ray, Billboard, MapGrid};
 
 use crate::combat::{CombatTarget, HitFlash};
-use crate::player::{apply_damage, Armor, Health, PainFlash, Player, PlayerMotor};
+use crate::player::{
+    apply_damage, apply_serum, Armor, Health, PainFlash, Player, PlayerMotor, SerumEffect,
+};
 
 use super::components::{Enemy, EnemyAi, EnemyArchetype, EnemyState, PlayerDetected};
 use super::boss::LieutenantBoss;
 use super::turret::spawn_turret;
+use super::scientist::ScientistBoss;
 use super::warden::WardenBoss;
 
 const ENEMY_RADIUS_DEFAULT: f32 = 0.22;
@@ -56,6 +59,7 @@ pub fn update_enemy_ai(
         &CombatTarget,
         Option<&mut LieutenantBoss>,
         Option<&mut WardenBoss>,
+        Option<&mut ScientistBoss>,
     )>,
 ) {
     let Ok(player) = player_q.single() else {
@@ -64,8 +68,17 @@ pub fn update_enemy_ai(
     let dt = time.delta_secs();
     let player_pos = player.pos;
 
-    for (entity, enemy, mut ai, mut billboard, mut transform, target, mut lt_boss, mut warden) in
-        &mut enemies
+    for (
+        entity,
+        enemy,
+        mut ai,
+        mut billboard,
+        mut transform,
+        target,
+        mut lt_boss,
+        mut warden,
+        mut scientist,
+    ) in &mut enemies
     {
         if target.dead || ai.state == EnemyState::Dead {
             ai.state = EnemyState::Dead;
@@ -80,6 +93,14 @@ pub fn update_enemy_ai(
             }
         }
         if let Some(ref mut boss) = warden {
+            if boss.stun_timer > 0.0 {
+                boss.stun_timer = (boss.stun_timer - dt).max(0.0);
+                if boss.stun_timer > 0.0 {
+                    stunned = true;
+                }
+            }
+        }
+        if let Some(ref mut boss) = scientist {
             if boss.stun_timer > 0.0 {
                 boss.stun_timer = (boss.stun_timer - dt).max(0.0);
                 if boss.stun_timer > 0.0 {
@@ -104,9 +125,13 @@ pub fn update_enemy_ai(
             EnemyState::Patrol => {
                 billboard.texture_id = ai.idle_texture;
                 if sees {
-                    ai.state = EnemyState::Chase;
                     ai.lose_sight_timer = 0.0;
                     detected.write(PlayerDetected { enemy: entity });
+                    ai.state = if ai.flees {
+                        EnemyState::Flee
+                    } else {
+                        EnemyState::Chase
+                    };
                 } else {
                     patrol_step(&map, &mut ai, &mut billboard, dt);
                 }
@@ -129,29 +154,55 @@ pub fn update_enemy_ai(
                     move_toward(&map, &mut ai, &mut billboard, player_pos, chase, dt);
                 }
             }
+            EnemyState::Flee => {
+                billboard.texture_id = ai.attack_texture;
+                if !sees {
+                    ai.lose_sight_timer += dt;
+                    if ai.lose_sight_timer > 3.0 {
+                        ai.state = EnemyState::Patrol;
+                        continue;
+                    }
+                } else {
+                    ai.lose_sight_timer = 0.0;
+                }
+                let away = pos + (pos - player_pos).normalize_or_zero() * 3.0;
+                let flee_speed = ai.chase_speed;
+                move_toward(&map, &mut ai, &mut billboard, away, flee_speed, dt);
+            }
             EnemyState::Attack => {
                 billboard.texture_id = ai.attack_texture;
                 face_toward(&mut ai, pos, player_pos);
                 if dist > ai.attack_range * 1.35 {
-                    ai.state = EnemyState::Chase;
+                    ai.state = if ai.flees {
+                        EnemyState::Flee
+                    } else {
+                        EnemyState::Chase
+                    };
                 } else if !sees && dist > ai.attack_range {
                     ai.state = EnemyState::Chase;
                 }
-                // Damage applied in `enemy_melee_attack`.
             }
             EnemyState::Stunned => {
                 billboard.texture_id = ai.attack_texture;
                 let lt_ok = lt_boss.as_ref().map(|b| b.stun_timer <= 0.0).unwrap_or(true);
                 let w_ok = warden.as_ref().map(|b| b.stun_timer <= 0.0).unwrap_or(true);
-                if lt_ok && w_ok {
+                let s_ok = scientist
+                    .as_ref()
+                    .map(|b| b.stun_timer <= 0.0)
+                    .unwrap_or(true);
+                if lt_ok && w_ok && s_ok {
                     ai.state = EnemyState::Chase;
                 }
             }
             EnemyState::Dead => {}
         }
 
-        // Zed prisoners jitter while chasing (swarm feel).
-        if enemy.archetype == EnemyArchetype::Zed && ai.state == EnemyState::Chase {
+        // Erratic jitter for Zed / Mutated Aide while chasing.
+        if matches!(
+            enemy.archetype,
+            EnemyArchetype::Zed | EnemyArchetype::MutatedAide
+        ) && ai.state == EnemyState::Chase
+        {
             let t = time.elapsed_secs() * 9.0 + entity.to_bits() as f32 * 0.01;
             let jitter = Vec2::new(t.sin(), t.cos()) * 0.35 * dt;
             billboard.pos = map.try_move(billboard.pos, jitter, ai.radius);
@@ -205,6 +256,7 @@ fn move_toward(
 pub fn enemy_melee_attack(
     time: Res<Time>,
     mut pain: ResMut<PainFlash>,
+    mut serum: ResMut<SerumEffect>,
     mut player: Query<(&PlayerMotor, &mut Health, &mut Armor), With<Player>>,
     mut enemies: Query<(&mut EnemyAi, &Billboard, &CombatTarget)>,
 ) {
@@ -225,6 +277,9 @@ pub fn enemy_melee_attack(
         }
         apply_damage(&mut health, &mut armor, ai.attack_damage);
         pain.trigger((ai.attack_damage / 40.0).clamp(0.15, 0.7));
+        if ai.applies_serum {
+            apply_serum(&mut serum, 8.0);
+        }
         ai.attack_cooldown = match ai.attack_range {
             r if r > 1.3 => 1.2,
             r if r < 1.05 => 0.55,
@@ -268,8 +323,15 @@ pub fn radio_alert_allies(
             if det_bb.pos.distance(ally_bb.pos) > RADIO_RANGE {
                 continue;
             }
-            if ally_ai.state == EnemyState::Patrol || ally_ai.state == EnemyState::Stunned {
-                ally_ai.state = EnemyState::Chase;
+            if matches!(
+                ally_ai.state,
+                EnemyState::Patrol | EnemyState::Stunned | EnemyState::Flee
+            ) {
+                ally_ai.state = if ally_ai.flees {
+                    EnemyState::Flee
+                } else {
+                    EnemyState::Chase
+                };
                 ally_ai.lose_sight_timer = 0.0;
             }
         }

@@ -9,7 +9,7 @@ pub mod floor_def;
 
 pub use floor_def::{
     load_floor_file, load_floor_number, EnemyArchetypeId, EntityDef, EntityKind, FactionId,
-    FloorCluster, FloorDef, InteractAction, PaletteId,
+    FloorCluster, FloorDef, InteractAction, PaletteId, PuzzleEffectId,
 };
 
 /// Content plugin: currently data-only; floor loading lives in gameplay.

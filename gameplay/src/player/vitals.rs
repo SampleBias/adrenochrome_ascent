@@ -137,6 +137,11 @@ impl Inventory {
             *slot = Some(ItemKind::Weapon(id));
         }
     }
+
+    /// Permanent inventory expansion (mutation perk, TODO-030).
+    pub fn expand_slots(&mut self, extra: usize) {
+        self.slots.extend(std::iter::repeat(None).take(extra));
+    }
 }
 
 /// Red pain flash intensity 0..1 (TODO-012).

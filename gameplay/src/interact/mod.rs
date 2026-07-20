@@ -5,9 +5,12 @@ use bevy::prelude::*;
 use adrenochrome_content::InteractAction;
 use adrenochrome_engine::{cast_ray, MapGrid, RayCamera};
 
+use crate::combat::CombatTarget;
+use crate::enemy::{Enemy, FloorAlarm, ScientistFight};
 use crate::game::{EndingKind, GameState};
 use crate::hazard::TimedValveState;
-use crate::puzzle::PuzzleRegistry;
+use crate::puzzle::{apply_effects, DnaSequencer, PuzzleRegistry};
+use crate::ui::TerminalSession;
 
 /// Max interaction reach in map cells.
 pub const INTERACT_RANGE: f32 = 2.2;
@@ -86,10 +89,15 @@ pub fn try_interact(
     mut map: ResMut<MapGrid>,
     mut registry: ResMut<PuzzleRegistry>,
     mut valves: ResMut<TimedValveState>,
+    mut dna: ResMut<DnaSequencer>,
+    mut scientist_fight: ResMut<ScientistFight>,
     mut ending: ResMut<EndingKind>,
+    mut alarm: ResMut<FloorAlarm>,
+    mut terminal: ResMut<TerminalSession>,
     mut next_state: ResMut<NextState<GameState>>,
     mut attempts: MessageWriter<InteractAttempt>,
     query: Query<(Entity, &Interactable, &Transform)>,
+    mut bosses: Query<(&Enemy, &mut CombatTarget)>,
 ) {
     if !keys.just_pressed(KeyCode::KeyE) {
         return;
@@ -129,9 +137,14 @@ pub fn try_interact(
         &interact.action,
         &mut registry,
         &mut valves,
+        &mut dna,
+        &mut scientist_fight,
         &mut ending,
+        &mut alarm,
+        &mut terminal,
         &mut next_state,
         &mut map,
+        &mut bosses,
     );
 }
 
@@ -139,9 +152,14 @@ fn apply_action(
     action: &InteractAction,
     registry: &mut PuzzleRegistry,
     valves: &mut TimedValveState,
+    dna: &mut DnaSequencer,
+    scientist_fight: &mut ScientistFight,
     ending: &mut EndingKind,
+    alarm: &mut FloorAlarm,
+    terminal: &mut TerminalSession,
     next_state: &mut NextState<GameState>,
     map: &mut MapGrid,
+    bosses: &mut Query<(&Enemy, &mut CombatTarget)>,
 ) {
     match action {
         InteractAction::SetFlag(flag) => {
@@ -161,7 +179,27 @@ fn apply_action(
         InteractAction::ReleaseSubjects => {
             *ending = EndingKind::Released;
             registry.set("subjects_released", true);
+            registry.add_counter("moral_score", 2);
             info!("Moral flag: subjects_released");
+        }
+        InteractAction::MoralChoice {
+            flag,
+            release_subjects,
+            score,
+        } => {
+            registry.set(flag.clone(), true);
+            registry.add_counter("moral_score", *score);
+            if *release_subjects {
+                *ending = EndingKind::Released;
+                registry.set("subjects_released", true);
+            }
+            info!(
+                "MoralChoice({flag}) score+{score} release={release_subjects}"
+            );
+        }
+        InteractAction::TriggerAlarm => {
+            alarm.raise(45.0);
+            registry.set("floor_alarm", true);
         }
         InteractAction::TimedValve { flag, window_secs } => {
             crate::hazard::arm_timed_valve_from_interact(
@@ -171,6 +209,68 @@ fn apply_action(
                 registry,
             );
         }
+        InteractAction::CollectLimb { amount } => {
+            registry.add_counter("collected_limb", *amount);
+            info!(
+                "Collected limb ×{amount} → {}",
+                registry.counter("collected_limb")
+            );
+        }
+        InteractAction::StartPuzzle(id) => {
+            let seq = match id.as_str() {
+                "scientist_dna_2" => "TGCA",
+                _ => "ACGT",
+            };
+            dna.start(id.clone(), seq);
+        }
+        InteractAction::OpenTerminal {
+            title,
+            body,
+            set_flag,
+        } => {
+            terminal.open(title.clone(), body.clone(), set_flag.clone());
+            info!("Opened terminal: {title}");
+        }
+        InteractAction::RunEffects { require, effects } => {
+            let ok = require
+                .as_deref()
+                .map(|c| registry.evaluate(c))
+                .unwrap_or(true);
+            if !ok {
+                info!("RunEffects blocked by condition");
+                return;
+            }
+            apply_effects(effects, registry, map, scientist_fight, alarm, bosses);
+        }
+    }
+}
+
+/// Walk-over biometric limb pickups.
+#[derive(Component, Debug, Clone, Copy)]
+pub struct LimbPickup {
+    pub amount: i32,
+}
+
+pub fn collect_limbs(
+    mut commands: Commands,
+    mut registry: ResMut<PuzzleRegistry>,
+    player: Query<&crate::player::PlayerMotor, With<crate::player::Player>>,
+    limbs: Query<(Entity, &LimbPickup, &Transform)>,
+) {
+    let Ok(motor) = player.single() else {
+        return;
+    };
+    for (entity, limb, tf) in &limbs {
+        let pos = Vec2::new(tf.translation.x, tf.translation.y);
+        if motor.pos.distance(pos) > 0.7 {
+            continue;
+        }
+        registry.add_counter("collected_limb", limb.amount);
+        info!(
+            "Picked up limb → {}",
+            registry.counter("collected_limb")
+        );
+        commands.entity(entity).despawn();
     }
 }
 

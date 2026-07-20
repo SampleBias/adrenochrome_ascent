@@ -88,6 +88,16 @@ FloorDef(
       ),
     ),
     EntityDef(
+      pos: (5.5, 12.5),
+      kind: Interactable(
+        prompt: "Arm Security mercy codes (spare if Warden falls)",
+        require: None,
+        action: MoralChoice(flag: "spare_security", release_subjects: false, score: 1),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
       pos: (10.5, 4.5),
       kind: Interactable(
         prompt: "Open basin gate",

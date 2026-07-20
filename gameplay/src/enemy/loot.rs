@@ -34,11 +34,17 @@ pub fn roll_loot(faction: Faction, archetype: EnemyArchetype) -> Option<LootKind
     match archetype {
         EnemyArchetype::Lieutenant => return Some(LootKind::KeyFlag("lieutenant_down".into())),
         EnemyArchetype::Warden => return Some(LootKind::KeyFlag("warden_down".into())),
+        EnemyArchetype::Scientist => return Some(LootKind::KeyFlag("scientist_down".into())),
+        EnemyArchetype::Ceo => return Some(LootKind::KeyFlag("ceo_down".into())),
+        EnemyArchetype::Bodyguard => return Some(LootKind::Armor(15.0)),
+        EnemyArchetype::LimoDriver => return Some(LootKind::Shells(3)),
         EnemyArchetype::Heavy if matches!(faction, Faction::Mob) => {
             return Some(LootKind::Shells(2));
         }
         EnemyArchetype::RiotGuard => return Some(LootKind::Armor(20.0)),
         EnemyArchetype::HazardTech => return Some(LootKind::Cells(6)),
+        EnemyArchetype::SerumZombie => return Some(LootKind::Adreno(1)),
+        EnemyArchetype::MutatedAide => return Some(LootKind::Health(12.0)),
         _ => {}
     }
 
@@ -55,8 +61,18 @@ pub fn roll_loot(faction: Faction, archetype: EnemyArchetype) -> Option<LootKind
             EnemyArchetype::Warden => Some(LootKind::KeyFlag("warden_down".into())),
             _ => Some(LootKind::Shells(2)),
         },
-        Faction::Research => Some(LootKind::Cells(8)),
-        Faction::Executive => Some(LootKind::Adreno(1)),
+        Faction::Research => match archetype {
+            EnemyArchetype::ResearcherMale | EnemyArchetype::ResearcherFemale => {
+                Some(LootKind::Cells(4))
+            }
+            EnemyArchetype::Scientist => Some(LootKind::KeyFlag("scientist_down".into())),
+            _ => Some(LootKind::Cells(8)),
+        },
+        Faction::Executive => match archetype {
+            EnemyArchetype::AdminSecretary => Some(LootKind::Cells(4)),
+            EnemyArchetype::Ceo => Some(LootKind::KeyFlag("ceo_down".into())),
+            _ => Some(LootKind::Ammo9mm(8)),
+        },
     }
 }
 

@@ -1,4 +1,4 @@
-//! Archetype stats + sprite ids (TODO-016 / TODO-020).
+//! Archetype stats + sprite ids (TODO-016 / TODO-020 / TODO-024).
 
 use super::components::{EnemyAi, EnemyArchetype, EnemyState, Faction};
 
@@ -24,6 +24,25 @@ pub const TEX_WARDEN_ATK: usize = 29;
 pub const TEX_CRATE: usize = 30;
 pub const TEX_TURRET: usize = 31;
 pub const TEX_TURRET_FIRE: usize = 32;
+pub const TEX_RES_M: usize = 33;
+pub const TEX_RES_M_ATK: usize = 34;
+pub const TEX_RES_F: usize = 35;
+pub const TEX_RES_F_ATK: usize = 36;
+pub const TEX_AIDE: usize = 37;
+pub const TEX_AIDE_ATK: usize = 38;
+pub const TEX_SERUM_Z: usize = 39;
+pub const TEX_SERUM_Z_ATK: usize = 40;
+pub const TEX_SCIENTIST: usize = 41;
+pub const TEX_SCIENTIST_ATK: usize = 42;
+pub const TEX_LIMB: usize = 43;
+pub const TEX_BODYGUARD: usize = 44;
+pub const TEX_BODYGUARD_ATK: usize = 45;
+pub const TEX_SECRETARY: usize = 46;
+pub const TEX_SECRETARY_ATK: usize = 47;
+pub const TEX_LIMO: usize = 48;
+pub const TEX_LIMO_ATK: usize = 49;
+pub const TEX_CEO: usize = 50;
+pub const TEX_CEO_ATK: usize = 51;
 
 #[derive(Debug, Clone, Copy)]
 pub struct ArchetypeStats {
@@ -43,154 +62,170 @@ pub struct ArchetypeStats {
     pub has_shield: bool,
     pub radio_alert: bool,
     pub deploys_turret: bool,
+    pub applies_serum: bool,
+    pub flees: bool,
+    pub triggers_alarm: bool,
+}
+
+fn base(
+    health: f32,
+    scale: f32,
+    speed: f32,
+    chase: f32,
+    atk_range: f32,
+    atk_dmg: f32,
+    atk_cd: f32,
+    view: f32,
+    fov: f32,
+    radius: f32,
+    idle: usize,
+    attack: usize,
+    faction: Faction,
+) -> ArchetypeStats {
+    ArchetypeStats {
+        health,
+        scale,
+        speed,
+        chase_speed: chase,
+        attack_range: atk_range,
+        attack_damage: atk_dmg,
+        attack_cooldown: atk_cd,
+        view_range: view,
+        view_fov_cos: fov,
+        radius,
+        idle_texture: idle,
+        attack_texture: attack,
+        faction,
+        has_shield: false,
+        radio_alert: false,
+        deploys_turret: false,
+        applies_serum: false,
+        flees: false,
+        triggers_alarm: false,
+    }
 }
 
 pub fn archetype_stats(archetype: EnemyArchetype) -> ArchetypeStats {
     match archetype {
-        EnemyArchetype::Thug => ArchetypeStats {
-            health: 35.0,
-            scale: 0.95,
-            speed: 1.4,
-            chase_speed: 2.4,
-            attack_range: 1.15,
-            attack_damage: 8.0,
-            attack_cooldown: 0.85,
-            view_range: 7.0,
-            view_fov_cos: 0.45,
-            radius: 0.22,
-            idle_texture: TEX_THUG,
-            attack_texture: TEX_THUG_ATK,
-            faction: Faction::Mob,
-            has_shield: false,
-            radio_alert: false,
-            deploys_turret: false,
-        },
-        EnemyArchetype::Heavy => ArchetypeStats {
-            health: 90.0,
-            scale: 1.15,
-            speed: 0.9,
-            chase_speed: 1.5,
-            attack_range: 1.35,
-            attack_damage: 18.0,
-            attack_cooldown: 1.2,
-            view_range: 6.0,
-            view_fov_cos: 0.35,
-            radius: 0.28,
-            idle_texture: TEX_HEAVY,
-            attack_texture: TEX_HEAVY_ATK,
-            faction: Faction::Mob,
-            has_shield: false,
-            radio_alert: false,
-            deploys_turret: false,
-        },
-        EnemyArchetype::Zed => ArchetypeStats {
-            health: 22.0,
-            scale: 0.85,
-            speed: 1.8,
-            chase_speed: 3.2,
-            attack_range: 1.0,
-            attack_damage: 6.0,
-            attack_cooldown: 0.55,
-            view_range: 8.5,
-            view_fov_cos: 0.2,
-            radius: 0.2,
-            idle_texture: TEX_ZED,
-            attack_texture: TEX_ZED_ATK,
-            faction: Faction::Mob,
-            has_shield: false,
-            radio_alert: false,
-            deploys_turret: false,
-        },
-        EnemyArchetype::Lieutenant => ArchetypeStats {
-            health: 220.0,
-            scale: 1.25,
-            speed: 1.1,
-            chase_speed: 1.8,
-            attack_range: 1.5,
-            attack_damage: 14.0,
-            attack_cooldown: 1.0,
-            view_range: 12.0,
-            view_fov_cos: -0.2,
-            radius: 0.3,
-            idle_texture: TEX_LIEUTENANT,
-            attack_texture: TEX_LIEUTENANT_ATK,
-            faction: Faction::Mob,
-            has_shield: false,
-            radio_alert: false,
-            deploys_turret: false,
-        },
-        EnemyArchetype::RiotGuard => ArchetypeStats {
-            health: 70.0,
-            scale: 1.1,
-            speed: 0.85,
-            chase_speed: 1.4,
-            attack_range: 1.25,
-            attack_damage: 12.0,
-            attack_cooldown: 1.0,
-            view_range: 6.5,
-            view_fov_cos: 0.4,
-            radius: 0.28,
-            idle_texture: TEX_RIOT,
-            attack_texture: TEX_RIOT_ATK,
-            faction: Faction::Security,
-            has_shield: true,
-            radio_alert: false,
-            deploys_turret: false,
-        },
-        EnemyArchetype::PatrolSecurity => ArchetypeStats {
-            health: 45.0,
-            scale: 0.95,
-            speed: 1.5,
-            chase_speed: 2.5,
-            attack_range: 1.15,
-            attack_damage: 9.0,
-            attack_cooldown: 0.75,
-            view_range: 8.0,
-            view_fov_cos: 0.35,
-            radius: 0.22,
-            idle_texture: TEX_PATROL,
-            attack_texture: TEX_PATROL_ATK,
-            faction: Faction::Security,
-            has_shield: false,
-            radio_alert: true,
-            deploys_turret: false,
-        },
-        EnemyArchetype::HazardTech => ArchetypeStats {
-            health: 40.0,
-            scale: 0.9,
-            speed: 1.3,
-            chase_speed: 2.0,
-            attack_range: 1.1,
-            attack_damage: 7.0,
-            attack_cooldown: 0.9,
-            view_range: 7.0,
-            view_fov_cos: 0.4,
-            radius: 0.22,
-            idle_texture: TEX_TECH,
-            attack_texture: TEX_TECH_ATK,
-            faction: Faction::Security,
-            has_shield: false,
-            radio_alert: false,
-            deploys_turret: true,
-        },
-        EnemyArchetype::Warden => ArchetypeStats {
-            health: 280.0,
-            scale: 1.3,
-            speed: 1.0,
-            chase_speed: 1.7,
-            attack_range: 1.55,
-            attack_damage: 16.0,
-            attack_cooldown: 0.95,
-            view_range: 14.0,
-            view_fov_cos: -0.15,
-            radius: 0.32,
-            idle_texture: TEX_WARDEN,
-            attack_texture: TEX_WARDEN_ATK,
-            faction: Faction::Security,
-            has_shield: true,
-            radio_alert: true,
-            deploys_turret: false,
-        },
+        EnemyArchetype::Thug => base(
+            35.0, 0.95, 1.4, 2.4, 1.15, 8.0, 0.85, 7.0, 0.45, 0.22, TEX_THUG, TEX_THUG_ATK,
+            Faction::Mob,
+        ),
+        EnemyArchetype::Heavy => base(
+            90.0, 1.15, 0.9, 1.5, 1.35, 18.0, 1.2, 6.0, 0.35, 0.28, TEX_HEAVY, TEX_HEAVY_ATK,
+            Faction::Mob,
+        ),
+        EnemyArchetype::Zed => base(
+            22.0, 0.85, 1.8, 3.2, 1.0, 6.0, 0.55, 8.5, 0.2, 0.2, TEX_ZED, TEX_ZED_ATK,
+            Faction::Mob,
+        ),
+        EnemyArchetype::Lieutenant => base(
+            220.0, 1.25, 1.1, 1.8, 1.5, 14.0, 1.0, 12.0, -0.2, 0.3, TEX_LIEUTENANT,
+            TEX_LIEUTENANT_ATK, Faction::Mob,
+        ),
+        EnemyArchetype::RiotGuard => {
+            let mut s = base(
+                70.0, 1.1, 0.85, 1.4, 1.25, 12.0, 1.0, 6.5, 0.4, 0.28, TEX_RIOT, TEX_RIOT_ATK,
+                Faction::Security,
+            );
+            s.has_shield = true;
+            s
+        }
+        EnemyArchetype::PatrolSecurity => {
+            let mut s = base(
+                45.0, 0.95, 1.5, 2.5, 1.15, 9.0, 0.75, 8.0, 0.35, 0.22, TEX_PATROL, TEX_PATROL_ATK,
+                Faction::Security,
+            );
+            s.radio_alert = true;
+            s
+        }
+        EnemyArchetype::HazardTech => {
+            let mut s = base(
+                40.0, 0.9, 1.3, 2.0, 1.1, 7.0, 0.9, 7.0, 0.4, 0.22, TEX_TECH, TEX_TECH_ATK,
+                Faction::Security,
+            );
+            s.deploys_turret = true;
+            s
+        }
+        EnemyArchetype::Warden => {
+            let mut s = base(
+                280.0, 1.3, 1.0, 1.7, 1.55, 16.0, 0.95, 14.0, -0.15, 0.32, TEX_WARDEN,
+                TEX_WARDEN_ATK, Faction::Security,
+            );
+            s.has_shield = true;
+            s.radio_alert = true;
+            s
+        }
+        EnemyArchetype::ResearcherMale => {
+            let mut s = base(
+                20.0, 0.9, 1.6, 2.8, 0.9, 4.0, 1.0, 7.5, 0.3, 0.2, TEX_RES_M, TEX_RES_M_ATK,
+                Faction::Research,
+            );
+            s.flees = true;
+            s.radio_alert = true;
+            s
+        }
+        EnemyArchetype::ResearcherFemale => {
+            let mut s = base(
+                20.0, 0.9, 1.7, 2.9, 0.9, 4.0, 1.0, 7.5, 0.3, 0.2, TEX_RES_F, TEX_RES_F_ATK,
+                Faction::Research,
+            );
+            s.flees = true;
+            s.radio_alert = true;
+            s
+        }
+        EnemyArchetype::MutatedAide => base(
+            50.0, 0.95, 2.0, 3.4, 1.05, 11.0, 0.5, 8.0, 0.15, 0.22, TEX_AIDE, TEX_AIDE_ATK,
+            Faction::Research,
+        ),
+        EnemyArchetype::SerumZombie => {
+            let mut s = base(
+                100.0, 1.1, 0.7, 1.2, 1.2, 10.0, 1.1, 5.5, 0.25, 0.28, TEX_SERUM_Z, TEX_SERUM_Z_ATK,
+                Faction::Research,
+            );
+            s.applies_serum = true;
+            s
+        }
+        EnemyArchetype::Scientist => {
+            let mut s = base(
+                300.0, 1.25, 1.2, 2.0, 1.6, 14.0, 0.9, 14.0, -0.2, 0.3, TEX_SCIENTIST,
+                TEX_SCIENTIST_ATK, Faction::Research,
+            );
+            s.applies_serum = true;
+            s.radio_alert = true;
+            s
+        }
+        EnemyArchetype::Bodyguard => {
+            let mut s = base(
+                110.0, 1.15, 0.95, 1.6, 1.3, 16.0, 0.95, 7.0, 0.4, 0.28, TEX_BODYGUARD,
+                TEX_BODYGUARD_ATK, Faction::Executive,
+            );
+            s.has_shield = true;
+            s
+        }
+        EnemyArchetype::AdminSecretary => {
+            let mut s = base(
+                18.0, 0.85, 1.5, 2.6, 0.85, 3.0, 1.2, 9.0, 0.25, 0.18, TEX_SECRETARY,
+                TEX_SECRETARY_ATK, Faction::Executive,
+            );
+            s.flees = true;
+            s.triggers_alarm = true;
+            s.radio_alert = true;
+            s
+        }
+        EnemyArchetype::LimoDriver => base(
+            55.0, 1.0, 1.4, 2.3, 1.15, 10.0, 0.8, 7.5, 0.35, 0.22, TEX_LIMO, TEX_LIMO_ATK,
+            Faction::Executive,
+        ),
+        EnemyArchetype::Ceo => {
+            let mut s = base(
+                200.0, 1.2, 1.0, 1.5, 1.4, 12.0, 1.1, 12.0, -0.1, 0.28, TEX_CEO, TEX_CEO_ATK,
+                Faction::Executive,
+            );
+            s.has_shield = true;
+            s.radio_alert = true;
+            s
+        }
     }
 }
 
@@ -216,5 +251,8 @@ pub fn make_ai(archetype: EnemyArchetype, waypoints: Vec<bevy::math::Vec2>, yaw:
         radio_alert: s.radio_alert,
         deploys_turret: s.deploys_turret,
         turret_deployed: false,
+        applies_serum: s.applies_serum,
+        flees: s.flees,
+        triggers_alarm: s.triggers_alarm,
     }
 }

@@ -1,14 +1,15 @@
-//! Global puzzle flag registry + compound condition evaluator (TODO-008).
+//! Global puzzle flag / counter registry + condition DSL (TODO-008 / TODO-026).
 
 use std::collections::HashMap;
 
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-/// Named boolean flags set by puzzle solves / interactables.
+/// Named boolean flags + integer counters for biometric / DNA puzzles.
 #[derive(Resource, Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PuzzleRegistry {
     pub flags: HashMap<String, bool>,
+    pub counters: HashMap<String, i32>,
 }
 
 impl PuzzleRegistry {
@@ -20,14 +21,29 @@ impl PuzzleRegistry {
         self.flags.insert(name.into(), value);
     }
 
-    pub fn clear(&mut self) {
-        self.flags.clear();
+    pub fn counter(&self, name: &str) -> i32 {
+        self.counters.get(name).copied().unwrap_or(0)
     }
 
-    /// Evaluate a simple boolean expression over flag names.
+    pub fn add_counter(&mut self, name: impl Into<String>, amount: i32) {
+        let name = name.into();
+        let v = self.counter(&name) + amount;
+        self.counters.insert(name, v);
+    }
+
+    pub fn set_counter(&mut self, name: impl Into<String>, value: i32) {
+        self.counters.insert(name.into(), value);
+    }
+
+    pub fn clear(&mut self) {
+        self.flags.clear();
+        self.counters.clear();
+    }
+
+    /// Evaluate a boolean expression over flags and counter comparisons.
     ///
-    /// Supports `&&`, `||`, `!`, parentheses, and identifiers.
-    /// Empty / missing expression → `true`.
+    /// Supports `&&`, `||`, `!`, parentheses, identifiers (flags),
+    /// and comparisons: `collected_limb == 3`, `collected_limb >= 2`.
     pub fn evaluate(&self, expr: &str) -> bool {
         let expr = expr.trim();
         if expr.is_empty() {
@@ -97,7 +113,46 @@ fn parse_primary<'a>(input: &'a str, reg: &PuzzleRegistry) -> ParseResult<'a> {
         return Ok((val, rest));
     }
     let (ident, rest) = take_ident(t)?;
-    Ok((reg.get(ident), rest))
+    let rest = rest.trim_start();
+    if rest.starts_with("==")
+        || rest.starts_with(">=")
+        || rest.starts_with("<=")
+        || rest.starts_with('>')
+        || rest.starts_with('<')
+    {
+        return parse_comparison(ident, rest, reg);
+    }
+    // Bare identifier: flag true, or counter > 0 as truthy.
+    Ok((reg.get(ident) || reg.counter(ident) > 0, rest))
+}
+
+fn parse_comparison<'a>(
+    ident: &str,
+    rest: &'a str,
+    reg: &PuzzleRegistry,
+) -> ParseResult<'a> {
+    let left = reg.counter(ident);
+    if let Some(after) = rest.strip_prefix("==") {
+        let (n, after) = take_i32(after.trim_start())?;
+        return Ok((left == n, after));
+    }
+    if let Some(after) = rest.strip_prefix(">=") {
+        let (n, after) = take_i32(after.trim_start())?;
+        return Ok((left >= n, after));
+    }
+    if let Some(after) = rest.strip_prefix("<=") {
+        let (n, after) = take_i32(after.trim_start())?;
+        return Ok((left <= n, after));
+    }
+    if let Some(after) = rest.strip_prefix('>') {
+        let (n, after) = take_i32(after.trim_start())?;
+        return Ok((left > n, after));
+    }
+    if let Some(after) = rest.strip_prefix('<') {
+        let (n, after) = take_i32(after.trim_start())?;
+        return Ok((left < n, after));
+    }
+    Err(format!("expected comparison after '{ident}'"))
 }
 
 fn take_ident(input: &str) -> Result<(&str, &str), String> {
@@ -110,6 +165,28 @@ fn take_ident(input: &str) -> Result<(&str, &str), String> {
         i += 1;
     }
     Ok((&input[..i], &input[i..]))
+}
+
+fn take_i32(input: &str) -> Result<(i32, &str), String> {
+    let bytes = input.as_bytes();
+    if bytes.is_empty() {
+        return Err("expected number".into());
+    }
+    let mut i = 0;
+    if bytes[0] == b'-' {
+        i = 1;
+    }
+    let start = i;
+    while i < bytes.len() && bytes[i].is_ascii_digit() {
+        i += 1;
+    }
+    if i == start {
+        return Err(format!("expected number, got '{input}'"));
+    }
+    let n: i32 = input[..i]
+        .parse::<i32>()
+        .map_err(|e: std::num::ParseIntError| e.to_string())?;
+    Ok((n, &input[i..]))
 }
 
 #[cfg(test)]
@@ -127,5 +204,16 @@ mod tests {
         assert!(reg.evaluate("has_keycard && power_restored"));
         assert!(reg.evaluate("!missing_flag || has_keycard"));
         assert!(reg.evaluate("(has_keycard && power_restored)"));
+    }
+
+    #[test]
+    fn evaluates_counter_comparisons() {
+        let mut reg = PuzzleRegistry::default();
+        reg.set_counter("collected_limb", 2);
+        assert!(!reg.evaluate("collected_limb == 3"));
+        assert!(reg.evaluate("collected_limb >= 2"));
+        reg.add_counter("collected_limb", 1);
+        assert!(reg.evaluate("collected_limb == 3"));
+        assert!(reg.evaluate("collected_limb >= 3 && has_keycard || collected_limb == 3"));
     }
 }

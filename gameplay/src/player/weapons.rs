@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use adrenochrome_engine::{cast_ray, Billboard, MapGrid};
 
+use super::serum::{cure_serum, SerumEffect};
 use super::vitals::{apply_damage, Armor, Health, Inventory, PainFlash};
 use crate::combat::{CombatTarget, HitFlash};
 use crate::enemy::{
@@ -195,6 +196,7 @@ pub fn fire_weapon(
     keys: Res<ButtonInput<KeyCode>>,
     map: Res<MapGrid>,
     mut vision: ResMut<AdrenoVision>,
+    mut serum: ResMut<SerumEffect>,
     mut muzzle: ResMut<MuzzleFlash>,
     mut shake: ResMut<ScreenShake>,
     mut pain: ResMut<PainFlash>,
@@ -227,12 +229,13 @@ pub fn fire_weapon(
         }
         vision.active = true;
         vision.time_left = 6.0;
+        // TODO-027: Injector clears serum debuff (still costs health).
+        let cured = cure_serum(&mut serum);
         loadout.cooldown = stats.cooldown;
         loadout.fire_anim = 0.25;
         muzzle.timer = 0.12;
         shake.add(0.15);
-        pain.trigger(0.2);
-        // Immediate drain tick feel.
+        pain.trigger(if cured { 0.35 } else { 0.2 });
         health.current = (health.current - 4.0).max(1.0);
         return;
     }

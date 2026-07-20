@@ -78,6 +78,16 @@ FloorDef(
       ),
     ),
     EntityDef(
+      pos: (17.5, 12.5),
+      kind: Interactable(
+        prompt: "Arm Mob mercy codes (spare if boss falls)",
+        require: None,
+        action: MoralChoice(flag: "spare_mob", release_subjects: false, score: 1),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
       pos: (2.5, 13.2),
       kind: Interactable(
         prompt: "Call elevator",

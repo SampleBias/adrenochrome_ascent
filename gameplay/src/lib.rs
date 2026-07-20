@@ -6,6 +6,7 @@ use bevy::prelude::*;
 
 use adrenochrome_engine::RaycasterSystems;
 
+pub mod audio;
 pub mod combat;
 pub mod enemy;
 pub mod floor_loader;
@@ -37,10 +38,16 @@ impl Plugin for GameplayPlugin {
             .init_resource::<player::AdrenoVision>()
             .init_resource::<player::ScreenShake>()
             .init_resource::<player::MuzzleFlash>()
+            .init_resource::<player::SerumEffect>()
             .init_resource::<enemy::BossFight>()
             .init_resource::<enemy::WardenOverrides>()
+            .init_resource::<enemy::ScientistFight>()
             .init_resource::<enemy::FactionRegistry>()
+            .init_resource::<enemy::FloorAlarm>()
+            .init_resource::<player::MutationPerks>()
             .init_resource::<hazard::TimedValveState>()
+            .init_resource::<puzzle::DnaSequencer>()
+            .add_plugins((audio::GameAudioPlugin, ui::TerminalUiPlugin))
             .add_message::<interact::InteractAttempt>()
             .add_message::<enemy::PlayerDetected>()
             .configure_sets(
@@ -69,14 +76,19 @@ impl Plugin for GameplayPlugin {
             .add_systems(
                 OnEnter(GameState::InGame),
                 (
+                    enemy::reset_floor_alarm,
                     floor_loader::load_current_floor,
                     game::enter_in_game_spawn_player,
+                    player::grant_mutation_perks,
                     player::capture_mouse,
                     ui::spawn_ingame_hud,
                 )
                     .chain(),
             )
-            .add_systems(OnExit(GameState::InGame), game::release_mouse)
+            .add_systems(
+                OnExit(GameState::InGame),
+                (game::release_mouse, ui::disable_pixel_hud),
+            )
             // --- Elevator: autosave current floor, then ride ---
             .add_systems(
                 OnEnter(GameState::ElevatorTransition),
@@ -95,7 +107,12 @@ impl Plugin for GameplayPlugin {
             // --- Ending ---
             .add_systems(
                 OnEnter(GameState::Ending),
-                (game::release_mouse, ui::spawn_ending),
+                (
+                    game::resolve_ending_from_flags,
+                    game::release_mouse,
+                    ui::spawn_ending,
+                )
+                    .chain(),
             )
             .add_systems(Update, game::flow_input)
             .add_systems(
@@ -110,6 +127,7 @@ impl Plugin for GameplayPlugin {
                     hazard::push_crates.in_set(PlayerSet::Move),
                     player::tick_weapon_timers.in_set(PlayerSet::Present),
                     player::tick_adreno_vision.in_set(PlayerSet::Present),
+                    player::tick_serum_effect.in_set(PlayerSet::Present),
                     player::tick_pain_flash.in_set(PlayerSet::Present),
                     player::update_hand_viewmodel.in_set(PlayerSet::Present),
                     combat::apply_screen_shake.in_set(PlayerSet::Present),
@@ -123,6 +141,9 @@ impl Plugin for GameplayPlugin {
                 (
                     enemy::update_enemy_ai.in_set(PlayerSet::Present),
                     enemy::radio_alert_allies.in_set(PlayerSet::Present),
+                    enemy::secretary_raise_alarm.in_set(PlayerSet::Present),
+                    enemy::tick_floor_alarm.in_set(PlayerSet::Present),
+                    enemy::apply_floor_alarm.in_set(PlayerSet::Present),
                     enemy::deploy_tech_turrets.in_set(PlayerSet::Present),
                     enemy::update_turrets.in_set(PlayerSet::Present),
                     enemy::enemy_melee_attack.in_set(PlayerSet::Present),
@@ -134,6 +155,8 @@ impl Plugin for GameplayPlugin {
                     enemy::tick_warden_fight.in_set(PlayerSet::Present),
                     enemy::enforce_warden_pause.in_set(PlayerSet::Present),
                     enemy::apply_warden_flood.in_set(PlayerSet::Present),
+                    enemy::detect_scientist_presence.in_set(PlayerSet::Present),
+                    enemy::tick_scientist_fight.in_set(PlayerSet::Present),
                 )
                     .run_if(in_state(GameState::InGame)),
             )
@@ -145,9 +168,14 @@ impl Plugin for GameplayPlugin {
                     enemy::collect_loot.in_set(PlayerSet::Present),
                     combat::despawn_dead_targets.in_set(PlayerSet::Present),
                     hazard::tick_timed_valves,
-                    player::sync_pain_flash_ui,
+                    puzzle::dna_sequencer_input,
+                    interact::collect_limbs,
+                    // Pain/serum flashes run through CRT post (TODO-034), not UI sprites.
+                    ui::sync_crt_post_fx,
+                    ui::sync_pixel_hud.before(RaycasterSystems::Render),
                     ui::sync_vitals_hud,
                     ui::sync_boss_hud,
+                    puzzle::sync_dna_hud,
                     interact::update_interaction_prompt,
                     interact::try_interact,
                     interact::sync_prompt_ui,

@@ -11,6 +11,7 @@ use crate::{
     billboard::{Billboard, HandOverlay},
     map::MapGrid,
     palette::{RENDER_HEIGHT, RENDER_WIDTH},
+    pixel_hud::{draw_pixel_hud, PixelHud},
     ray_camera::RayCamera,
     render_target::LowResTarget,
     textures::{TextureSet, TEX_SIZE},
@@ -47,6 +48,7 @@ pub fn render_frame(
     mut depth: ResMut<DepthBuffer>,
     billboards: Query<&Billboard>,
     hands: Query<&HandOverlay>,
+    hud: Res<PixelHud>,
     time: Res<Time>,
 ) {
     let Some(mut image) = images.get_mut(&target.0) else {
@@ -158,10 +160,13 @@ pub fn render_frame(
         );
     }
 
-    // --- Hand overlay (screen space, after world) ---
+    // --- Hand overlay (HUD layer, after world — TODO-011 / TODO-033) ---
     for hand in &hands {
         draw_hand(buf, w, h, &textures, hand, time.elapsed_secs());
     }
+
+    // --- Pixel vitals HUD (same 320×200 buffer → CRT) ---
+    draw_pixel_hud(buf, w, h, &hud);
 }
 
 /// DDA cast. Returns (perp_distance, texture_id, wall_x 0..1, side 0=x 1=y).

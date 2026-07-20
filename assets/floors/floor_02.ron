@@ -78,6 +78,16 @@ FloorDef(
       ),
     ),
     EntityDef(
+      pos: (15.5, 11.5),
+      kind: Interactable(
+        prompt: "Unlock subject holding cage",
+        require: None,
+        action: MoralChoice(flag: "released_f2_subjects", release_subjects: false, score: 1),
+        texture_id: None,
+        scale: 0.5,
+      ),
+    ),
+    EntityDef(
       pos: (10.5, 13.2),
       kind: Interactable(
         prompt: "Call elevator",

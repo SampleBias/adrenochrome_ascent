@@ -65,7 +65,7 @@ pub enum FactionId {
     Executive,
 }
 
-/// Spawnable enemy archetypes (Mob + Security / Warden tiers).
+/// Spawnable enemy archetypes (Mob + Security + Research tiers).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum EnemyArchetypeId {
     // Mob (Sprint 4)
@@ -78,6 +78,17 @@ pub enum EnemyArchetypeId {
     PatrolSecurity,
     HazardTech,
     Warden,
+    // Research (Sprint 6)
+    ResearcherMale,
+    ResearcherFemale,
+    MutatedAide,
+    SerumZombie,
+    Scientist,
+    // Executive (Sprint 7)
+    Bodyguard,
+    AdminSecretary,
+    LimoDriver,
+    Ceo,
 }
 
 /// What happens when the player uses an interactable.
@@ -94,11 +105,75 @@ pub enum InteractAction {
     CallElevator,
     /// Flip the moral-choice ending toward Released.
     ReleaseSubjects,
+    /// Optional side-puzzle moral choice (TODO-031): sets flag + increments moral score.
+    MoralChoice {
+        flag: String,
+        /// If true, also sets `subjects_released` / EndingKind::Released.
+        #[serde(default)]
+        release_subjects: bool,
+        /// Points added to `moral_score` counter.
+        #[serde(default = "default_one")]
+        score: i32,
+    },
+    /// Trigger a floor-wide stealth alarm (TODO-028).
+    TriggerAlarm,
     /// Start / refresh a timed valve window (TODO-022).
     TimedValve {
         flag: String,
         window_secs: f32,
     },
+    /// Collect a biometric limb (TODO-026).
+    CollectLimb {
+        #[serde(default = "default_one")]
+        amount: i32,
+    },
+    /// Activate a named puzzle (DNA sequencer, etc.) — TODO-026.
+    StartPuzzle(String),
+    /// Open a full-res egui terminal panel (TODO-033).
+    OpenTerminal {
+        title: String,
+        body: String,
+        /// Flag set when the player confirms / closes the terminal.
+        #[serde(default)]
+        set_flag: Option<String>,
+    },
+    /// Apply puzzle DSL effects if condition holds (TODO-026).
+    RunEffects {
+        require: Option<String>,
+        effects: Vec<PuzzleEffectId>,
+    },
+}
+
+fn default_one() -> i32 {
+    1
+}
+
+/// Serializable puzzle effects for RON floor / puzzle defs (TODO-026).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum PuzzleEffectId {
+    SetFlag(String),
+    ClearFlag(String),
+    OpenDoor {
+        cell: (i32, i32),
+        flag: Option<String>,
+    },
+    AddCounter {
+        name: String,
+        amount: i32,
+    },
+    SetCounter {
+        name: String,
+        value: i32,
+    },
+    DamageBoss(f32),
+    AdvanceBossPhase,
+    /// Increment moral score / set a moral flag (TODO-031).
+    MoralBump {
+        flag: String,
+        #[serde(default = "default_one")]
+        score: i32,
+    },
+    TriggerAlarm,
 }
 
 /// Kind of world object to spawn from floor data.
@@ -133,6 +208,13 @@ pub enum EntityKind {
         #[serde(default = "default_turret_scale")]
         scale: f32,
     },
+    /// Biometric limb pickup (TODO-026).
+    Limb {
+        #[serde(default = "default_one")]
+        amount: i32,
+        #[serde(default = "default_limb_scale")]
+        scale: f32,
+    },
     /// Raycast-interactable (door, terminal, valve, elevator).
     Interactable {
         prompt: String,
@@ -153,6 +235,9 @@ fn default_turret_yaw() -> f32 {
 }
 fn default_turret_scale() -> f32 {
     0.55
+}
+fn default_limb_scale() -> f32 {
+    0.4
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

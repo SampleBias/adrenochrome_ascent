@@ -11,6 +11,7 @@ use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
 use adrenochrome_engine::{MapGrid, RayCamera};
 
 use super::constants::*;
+use super::perks::MutationPerks;
 use super::vitals::{Armor, Health, Inventory};
 use super::weapons::WeaponLoadout;
 
@@ -136,6 +137,7 @@ pub fn player_move(
     time: Res<Time>,
     keys: Res<ButtonInput<KeyCode>>,
     map: Res<MapGrid>,
+    perks: Res<MutationPerks>,
     mut camera: ResMut<RayCamera>,
     mut query: Query<&mut PlayerMotor, With<Player>>,
 ) {
@@ -163,11 +165,12 @@ pub fn player_move(
     }
 
     motor.is_sprinting = keys.pressed(KeyCode::ShiftLeft);
+    let perk_mul = perks.speed_multiplier();
     let max_speed = if motor.is_sprinting {
         SPRINT_SPEED
     } else {
         WALK_SPEED
-    };
+    } * perk_mul;
 
     // Ground friction (always applied — classic feel when releasing keys).
     apply_friction(&mut motor.velocity, dt);

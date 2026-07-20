@@ -1,4 +1,4 @@
-//! Enemy ECS components (TODO-015 / TODO-020).
+//! Enemy ECS components (TODO-015 / TODO-020 / TODO-024).
 
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -23,7 +23,7 @@ impl From<adrenochrome_content::FactionId> for Faction {
     }
 }
 
-/// Mob + Security archetypes (and their bosses).
+/// Mob + Security + Research archetypes (and their bosses).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Component, Serialize, Deserialize)]
 pub enum EnemyArchetype {
     Thug,
@@ -34,6 +34,15 @@ pub enum EnemyArchetype {
     PatrolSecurity,
     HazardTech,
     Warden,
+    ResearcherMale,
+    ResearcherFemale,
+    MutatedAide,
+    SerumZombie,
+    Scientist,
+    Bodyguard,
+    AdminSecretary,
+    LimoDriver,
+    Ceo,
 }
 
 impl From<adrenochrome_content::EnemyArchetypeId> for EnemyArchetype {
@@ -47,13 +56,40 @@ impl From<adrenochrome_content::EnemyArchetypeId> for EnemyArchetype {
             adrenochrome_content::EnemyArchetypeId::PatrolSecurity => Self::PatrolSecurity,
             adrenochrome_content::EnemyArchetypeId::HazardTech => Self::HazardTech,
             adrenochrome_content::EnemyArchetypeId::Warden => Self::Warden,
+            adrenochrome_content::EnemyArchetypeId::ResearcherMale => Self::ResearcherMale,
+            adrenochrome_content::EnemyArchetypeId::ResearcherFemale => Self::ResearcherFemale,
+            adrenochrome_content::EnemyArchetypeId::MutatedAide => Self::MutatedAide,
+            adrenochrome_content::EnemyArchetypeId::SerumZombie => Self::SerumZombie,
+            adrenochrome_content::EnemyArchetypeId::Scientist => Self::Scientist,
+            adrenochrome_content::EnemyArchetypeId::Bodyguard => Self::Bodyguard,
+            adrenochrome_content::EnemyArchetypeId::AdminSecretary => Self::AdminSecretary,
+            adrenochrome_content::EnemyArchetypeId::LimoDriver => Self::LimoDriver,
+            adrenochrome_content::EnemyArchetypeId::Ceo => Self::Ceo,
         }
     }
 }
 
 impl EnemyArchetype {
     pub fn is_boss(self) -> bool {
-        matches!(self, Self::Lieutenant | Self::Warden)
+        matches!(
+            self,
+            Self::Lieutenant | Self::Warden | Self::Scientist | Self::Ceo
+        )
+    }
+
+    pub fn applies_serum(self) -> bool {
+        matches!(self, Self::SerumZombie | Self::Scientist)
+    }
+
+    pub fn flees(self) -> bool {
+        matches!(
+            self,
+            Self::ResearcherMale | Self::ResearcherFemale | Self::AdminSecretary
+        )
+    }
+
+    pub fn triggers_alarm(self) -> bool {
+        matches!(self, Self::AdminSecretary)
     }
 }
 
@@ -62,6 +98,7 @@ pub enum EnemyState {
     Patrol,
     Chase,
     Attack,
+    Flee,
     Stunned,
     Dead,
 }
@@ -73,7 +110,7 @@ pub struct Enemy {
     pub archetype: EnemyArchetype,
 }
 
-/// Grunt / boss AI runtime state (TODO-018 / TODO-020).
+/// Grunt / boss AI runtime state.
 #[derive(Component, Debug, Clone)]
 pub struct EnemyAi {
     pub state: EnemyState,
@@ -91,13 +128,14 @@ pub struct EnemyAi {
     pub radius: f32,
     pub idle_texture: usize,
     pub attack_texture: usize,
-    /// Riot Guard: block frontal hitscan when true.
     pub has_shield: bool,
-    /// Patrol Security: radio-alert nearby allies on detect.
     pub radio_alert: bool,
-    /// Hazard Tech: deploy a turret once when first chasing.
     pub deploys_turret: bool,
     pub turret_deployed: bool,
+    pub applies_serum: bool,
+    pub flees: bool,
+    /// Admin Secretaries raise a floor-wide stealth alarm on detect (TODO-028).
+    pub triggers_alarm: bool,
 }
 
 /// Fired when an enemy first acquires LOS on the player.

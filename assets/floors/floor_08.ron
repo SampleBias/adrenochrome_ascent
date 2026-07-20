@@ -1,12 +1,12 @@
-// Floor 08 — Executive Approach
+// Floor 08 — Research Approach
 FloorDef(
   number: 8,
-  name: "Executive Approach",
+  name: "Research Approach",
   subtitle: "Upper — Teal Corridor",
   cluster: Surface,
   palette: Teal,
   ambient_audio: "ambient/sterile_hall",
-  intro_text: "Clean floors. Dirty secrets. Badge the executive lock.",
+  intro_text: "Researchers flee. Executives watch. Collect three limbs — and choose who to free.",
   player_spawn: (10.5, 12.5),
   player_yaw: -1.5707963267948966,
   rows: [
@@ -28,20 +28,82 @@ FloorDef(
   ],
   entities: [
     EntityDef(
-      pos: (10.5, 5.5),
+      pos: (6.5, 9.5),
+      kind: Enemy(
+        faction: Research,
+        archetype: ResearcherMale,
+        scale: 0.9,
+        waypoints: [(5.5, 9.5), (8.5, 9.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
+      pos: (14.5, 9.5),
+      kind: Enemy(
+        faction: Research,
+        archetype: ResearcherFemale,
+        scale: 0.9,
+        waypoints: [(13.5, 9.5), (15.5, 9.5)],
+        yaw: 3.14159,
+      ),
+    ),
+    EntityDef(
+      pos: (8.5, 5.5),
+      kind: Enemy(
+        faction: Research,
+        archetype: MutatedAide,
+        scale: 0.95,
+        waypoints: [(7.5, 5.5), (12.5, 5.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
+      pos: (12.5, 11.5),
+      kind: Enemy(
+        faction: Executive,
+        archetype: AdminSecretary,
+        scale: 0.85,
+        waypoints: [(11.5, 11.5), (14.5, 11.5)],
+        yaw: 3.14159,
+      ),
+    ),
+    EntityDef(
+      pos: (7.5, 7.5),
+      kind: Enemy(
+        faction: Executive,
+        archetype: Bodyguard,
+        scale: 1.1,
+        waypoints: [(6.5, 7.5), (9.5, 7.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
+      pos: (5.5, 8.5),
+      kind: Limb(amount: 1, scale: 0.4),
+    ),
+    EntityDef(
+      pos: (15.5, 8.5),
+      kind: Limb(amount: 1, scale: 0.4),
+    ),
+    EntityDef(
+      pos: (10.5, 10.5),
+      kind: Limb(amount: 1, scale: 0.4),
+    ),
+    EntityDef(
+      pos: (4.5, 11.5),
       kind: Interactable(
-        prompt: "Scan executive badge",
+        prompt: "Release containment subjects",
         require: None,
-        action: SetFlag("has_keycard"),
-        texture_id: Some(3),
-        scale: 0.4,
+        action: MoralChoice(flag: "released_f8_subjects", release_subjects: true, score: 1),
+        texture_id: None,
+        scale: 0.5,
       ),
     ),
     EntityDef(
       pos: (10.5, 3.5),
       kind: Interactable(
-        prompt: "Open executive door",
-        require: Some("has_keycard"),
+        prompt: "Biometric door (3 limbs)",
+        require: Some("collected_limb >= 3"),
         action: OpenDoor(cell:(10,3), flag:Some("exec_open")),
         texture_id: None,
         scale: 0.5,

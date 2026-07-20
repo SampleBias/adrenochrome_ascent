@@ -13,9 +13,9 @@ dependencies, parallelization notes, and mapping to the existing codebase scaffo
 | 3 | Player Systems & Inventory | [sprint-03-player-systems-inventory.md](sprint-03-player-systems-inventory.md) | TODO-011 → 014 | Complete |
 | 4 | Enemy Factions & AI (Lieutenant Mob Tier) | [sprint-04-enemy-factions-ai-lieutenant-mob-tier.md](sprint-04-enemy-factions-ai-lieutenant-mob-tier.md) | TODO-015 → 019 | Complete |
 | 5 | Mid-Game Factions & Hazards (Warden Tier) | [sprint-05-mid-game-factions-hazards-warden-tier.md](sprint-05-mid-game-factions-hazards-warden-tier.md) | TODO-020 → 023 | Complete |
-| 6 | Late-Game Factions & Mini-Games (Scientist Tier) | [sprint-06-late-game-factions-minigames-scientist-tier.md](sprint-06-late-game-factions-minigames-scientist-tier.md) | TODO-024 → 027 | Not started |
-| 7 | Executive Tier, Progression & Moral Choice | [sprint-07-executive-tier-progression-moral-choice.md](sprint-07-executive-tier-progression-moral-choice.md) | TODO-028 → 031 | Not started |
-| 8 | Audio, UI & Polish | [sprint-08-audio-ui-polish.md](sprint-08-audio-ui-polish.md) | TODO-032 → 034 | Not started |
+| 6 | Late-Game Factions & Mini-Games (Scientist Tier) | [sprint-06-late-game-factions-minigames-scientist-tier.md](sprint-06-late-game-factions-minigames-scientist-tier.md) | TODO-024 → 027 | Complete |
+| 7 | Executive Tier, Progression & Moral Choice | [sprint-07-executive-tier-progression-moral-choice.md](sprint-07-executive-tier-progression-moral-choice.md) | TODO-028 → 031 | Complete |
+| 8 | Audio, UI & Polish | [sprint-08-audio-ui-polish.md](sprint-08-audio-ui-polish.md) | TODO-032 → 034 | Complete |
 | 9 | Content Completion & Balancing | [sprint-09-content-completion-balancing.md](sprint-09-content-completion-balancing.md) | TODO-035 → 037 | Not started |
 | 10 | Testing, Optimization & Ship | [sprint-10-testing-optimization-ship.md](sprint-10-testing-optimization-ship.md) | TODO-038 → 041 | Not started |
 

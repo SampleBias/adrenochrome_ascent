@@ -1,6 +1,6 @@
 //! CRT upscale material: samples the 320×200 render target and draws it
 //! fullscreen with nearest-neighbor filtering, palette tint, and lo-fi
-//! horror post (scanlines, vignette, dither, grain).
+//! horror post (scanlines, vignette, dither, grain, pain/serum).
 //!
 //! Pipeline:
 //!
@@ -30,6 +30,7 @@ const CRT_SHADER_PATH: &str = "embedded://adrenochrome_engine/shaders/crt_upscal
 pub const DEFAULT_SCANLINE: f32 = 0.42;
 pub const DEFAULT_VIGNETTE: f32 = 0.85;
 pub const DEFAULT_DITHER: f32 = 0.75;
+pub const DEFAULT_PHOSPHOR: f32 = 0.55;
 
 /// Fullscreen material that upscales the low-res render target.
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
@@ -44,6 +45,9 @@ pub struct CrtMaterial {
     /// CRT post params: `[scanline, vignette, dither, time_secs]`.
     #[uniform(3)]
     pub crt_params: [f32; 4],
+    /// Extra post: `[pain, serum, phosphor, unused]`.
+    #[uniform(4)]
+    pub post_fx: [f32; 4],
 }
 
 impl CrtMaterial {
@@ -52,6 +56,7 @@ impl CrtMaterial {
             source_texture,
             palette_tint,
             crt_params: [DEFAULT_SCANLINE, DEFAULT_VIGNETTE, DEFAULT_DITHER, 0.0],
+            post_fx: [0.0, 0.0, DEFAULT_PHOSPHOR, 0.0],
         }
     }
 }
@@ -94,5 +99,14 @@ pub fn update_crt_time(time: Res<Time>, mut materials: ResMut<Assets<CrtMaterial
     let t = time.elapsed_secs();
     for (_, mat) in materials.iter_mut() {
         mat.crt_params[3] = t;
+    }
+}
+
+/// Drive pain / serum uniforms from gameplay (TODO-034).
+pub fn set_crt_post_fx(materials: &mut Assets<CrtMaterial>, pain: f32, serum: f32) {
+    for (_, mat) in materials.iter_mut() {
+        mat.post_fx[0] = pain.clamp(0.0, 1.0);
+        mat.post_fx[1] = serum.clamp(0.0, 1.0);
+        mat.post_fx[2] = DEFAULT_PHOSPHOR;
     }
 }

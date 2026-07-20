@@ -1,12 +1,12 @@
-// Floor 09 — Penthouse Access
+// Floor 09 — Serum Ward
 FloorDef(
   number: 9,
-  name: "Penthouse Access",
-  subtitle: "Surface Approach — Sky Lobby",
+  name: "Serum Ward",
+  subtitle: "Surface Approach — Contagion",
   cluster: Surface,
   palette: Teal,
   ambient_audio: "ambient/wind_glass",
-  intro_text: "Glass and night. One more lock before the roof.",
+  intro_text: "Serum ward under Executive lock. Night vision settles in. Unlock the roof.",
   player_spawn: (10.5, 12.5),
   player_yaw: -1.5707963267948966,
   rows: [
@@ -28,8 +28,68 @@ FloorDef(
   ],
   entities: [
     EntityDef(
+      pos: (8.5, 9.5),
+      kind: Enemy(
+        faction: Research,
+        archetype: SerumZombie,
+        scale: 1.1,
+        waypoints: [(7.5, 9.5), (12.5, 9.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
+      pos: (14.5, 8.5),
+      kind: Enemy(
+        faction: Research,
+        archetype: SerumZombie,
+        scale: 1.05,
+        waypoints: [(13.5, 8.5), (15.5, 8.5), (15.5, 11.5)],
+        yaw: 3.14159,
+      ),
+    ),
+    EntityDef(
+      pos: (6.5, 5.5),
+      kind: Enemy(
+        faction: Research,
+        archetype: MutatedAide,
+        scale: 0.95,
+        waypoints: [(5.5, 5.5), (8.5, 5.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
+      pos: (12.5, 11.5),
+      kind: Enemy(
+        faction: Executive,
+        archetype: Bodyguard,
+        scale: 1.1,
+        waypoints: [(11.5, 11.5), (14.5, 11.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
+      pos: (5.5, 10.5),
+      kind: Enemy(
+        faction: Executive,
+        archetype: AdminSecretary,
+        scale: 0.85,
+        waypoints: [(4.5, 10.5), (7.5, 10.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
       pos: (10.5, 8.5),
       kind: Billboard(texture_id: 2, scale: 0.65),
+    ),
+    EntityDef(
+      pos: (15.5, 5.5),
+      kind: Interactable(
+        prompt: "Wipe research logs (spare researchers)",
+        require: None,
+        action: MoralChoice(flag: "spare_research", release_subjects: false, score: 1),
+        texture_id: None,
+        scale: 0.5,
+      ),
     ),
     EntityDef(
       pos: (10.5, 9.5),

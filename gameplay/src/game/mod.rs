@@ -4,7 +4,7 @@ mod floor;
 mod states;
 mod transitions;
 
-pub use floor::{CurrentFloor, EndingKind};
+pub use floor::{resolve_ending_from_flags, CurrentFloor, EndingKind};
 pub use states::GameState;
 pub use transitions::{
     ElevatorTimer, apply_floor_palette, enter_elevator, enter_in_game_spawn_player,

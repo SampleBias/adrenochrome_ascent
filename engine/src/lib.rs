@@ -10,6 +10,7 @@ pub mod crt_material;
 pub mod demo;
 pub mod map;
 pub mod palette;
+pub mod pixel_hud;
 pub mod ray_camera;
 pub mod raycaster;
 pub mod render_target;
@@ -17,13 +18,15 @@ pub mod textures;
 
 pub use billboard::{Billboard, HandOverlay};
 pub use crt_material::{
-    CrtFullscreenQuad, CrtMaterial, UpscaleCamera, update_crt_palette, update_crt_time,
+    set_crt_post_fx, update_crt_palette, update_crt_time, CrtFullscreenQuad, CrtMaterial,
+    UpscaleCamera,
 };
 pub use map::MapGrid;
 pub use palette::{ActivePalette, Palette, RENDER_HEIGHT, RENDER_WIDTH};
+pub use pixel_hud::PixelHud;
 pub use ray_camera::RayCamera;
 pub use raycaster::cast_ray;
-pub use render_target::{LowResTarget, fit_fullscreen_quad, setup_render_target};
+pub use render_target::{fit_fullscreen_quad, setup_render_target, LowResTarget};
 pub use textures::TextureSet;
 
 /// Ordered raycaster stages so gameplay systems can run before the frame draw.
@@ -41,6 +44,7 @@ impl Plugin for EnginePlugin {
 
         app.add_plugins(bevy::sprite_render::Material2dPlugin::<CrtMaterial>::default())
             .init_resource::<raycaster::DepthBuffer>()
+            .init_resource::<PixelHud>()
             .insert_resource(TextureSet::procedural())
             // Defaults until gameplay floor loader replaces them.
             .insert_resource(MapGrid::from_rows(&["###", "#.#", "###"]))

@@ -76,29 +76,29 @@ Key Features: Custom raycaster / low-res 320x200 CRT aesthetic, puzzle DSL, enem
 ## Sprint 6: Late-Game Factions & Mini-Games (Scientist Tier)
 **Owner:** Gameplay + Content Teams
 
-- [ ] **[TODO-024]** Mad Scientist faction: Male/Female Researchers (variant sprites), Mutated Aides, Serum Zombies. (1 week)
-- [ ] **[MASTER]** **[TODO-025]** Scientist boss (Floor 10): DNA sequencer mini-game (RON DSL), teleport + serum attacks. (1 week)
-- [ ] **[TODO-026]** Puzzle DSL parser (RON conditions + effects). Biometric doors (limb collection). (1 week)
-- [ ] **[TODO-027]** Adrenochrome Injector integration as counter to serum effects. (4 days)
+- [x] **[TODO-024]** Mad Scientist faction: Male/Female Researchers (variant sprites), Mutated Aides, Serum Zombies. (1 week)
+- [x] **[MASTER]** **[TODO-025]** Scientist boss (Floor 10): DNA sequencer mini-game (RON DSL), teleport + serum attacks. (1 week)
+- [x] **[TODO-026]** Puzzle DSL parser (RON conditions + effects). Biometric doors (limb collection). (1 week)
+- [x] **[TODO-027]** Adrenochrome Injector integration as counter to serum effects. (4 days)
 
 ---
 
 ## Sprint 7: Executive Tier, Progression & Moral Choice
 **Owner:** Content + Systems Teams
 
-- [ ] **[TODO-028]** Executive faction: Bodyguards, Admin Secretaries, Limo Drivers (stealth alarms, ending convoy). (6 days)
-- [ ] **[TODO-029]** CEO narrative climax + two endings (subjects_released flag from side-puzzles). (1 week)
-- [ ] **[TODO-030]** Permanent mutation perks (one every 3 floors: speed, inventory, night vision). (4 days)
-- [ ] **[TODO-031]** Side-puzzle system for tracking moral choices across floors. (5 days)
+- [x] **[TODO-028]** Executive faction: Bodyguards, Admin Secretaries, Limo Drivers (stealth alarms, ending convoy). (6 days)
+- [x] **[TODO-029]** CEO narrative climax + two endings (subjects_released flag from side-puzzles). (1 week)
+- [x] **[TODO-030]** Permanent mutation perks (one every 3 floors: speed, inventory, night vision). (4 days)
+- [x] **[TODO-031]** Side-puzzle system for tracking moral choices across floors. (5 days)
 
 ---
 
 ## Sprint 8: Audio, UI & Polish
 **Owner:** Art & Audio + Systems Teams
 
-- [ ] **[TODO-032]** MIDI-style tracker music, floor-specific footsteps (wet → clean), distorted PA voice lines. (1 week)
-- [ ] **[TODO-033]** Pixel font UI (health/ammo) + egui fallback for terminals. Hand overlay system. (5 days)
-- [ ] **[TODO-034]** Full post-processing stack: dither, CRT effects, palette swaps, pain flashes. (4 days)
+- [x] **[TODO-032]** MIDI-style tracker music, floor-specific footsteps (wet → clean), distorted PA voice lines. (1 week)
+- [x] **[TODO-033]** Pixel font UI (health/ammo) + egui fallback for terminals. Hand overlay system. (5 days)
+- [x] **[TODO-034]** Full post-processing stack: dither, CRT effects, palette swaps, pain flashes. (4 days)
 
 ---
 

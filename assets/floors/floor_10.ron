@@ -1,12 +1,12 @@
-// Floor 10 — The Surface
+// Floor 10 — Scientist Arena + CEO climax (Sprint 6–7)
 FloorDef(
   number: 10,
   name: "The Surface",
-  subtitle: "Roof — Escape",
+  subtitle: "Roof — Mad Lab",
   cluster: Surface,
   palette: Black,
   ambient_audio: "ambient/night_wind",
-  intro_text: "Cold air. Convoy lights. Take the last elevator — or vanish.",
+  intro_text: "Scientist. CEO. Limos idle in the snow. Choose who walks free.",
   player_spawn: (10.5, 12.5),
   player_yaw: -1.5707963267948966,
   rows: [
@@ -28,15 +28,81 @@ FloorDef(
   ],
   entities: [
     EntityDef(
-      pos: (10.5, 4.0),
-      kind: Billboard(texture_id: 0, scale: 0.9),
+      pos: (10.5, 6.5),
+      kind: Enemy(
+        faction: Research,
+        archetype: Scientist,
+        scale: 1.25,
+        waypoints: [(9.0, 6.5), (12.0, 6.5)],
+        yaw: 3.14159,
+      ),
+    ),
+    EntityDef(
+      pos: (7.5, 9.5),
+      kind: Enemy(
+        faction: Research,
+        archetype: SerumZombie,
+        scale: 1.05,
+        waypoints: [(6.5, 9.5), (9.5, 9.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
+      pos: (13.5, 8.5),
+      kind: Enemy(
+        faction: Executive,
+        archetype: Bodyguard,
+        scale: 1.15,
+        waypoints: [(12.5, 8.5), (15.5, 8.5)],
+        yaw: 3.14159,
+      ),
+    ),
+    EntityDef(
+      pos: (5.5, 11.5),
+      kind: Enemy(
+        faction: Executive,
+        archetype: AdminSecretary,
+        scale: 0.85,
+        waypoints: [(4.5, 11.5), (7.5, 11.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
+      pos: (8.5, 4.5),
+      kind: Enemy(
+        faction: Executive,
+        archetype: LimoDriver,
+        scale: 1.0,
+        waypoints: [(7.5, 4.5), (9.5, 4.5)],
+        yaw: 0.0,
+      ),
+    ),
+    EntityDef(
+      pos: (12.5, 4.5),
+      kind: Enemy(
+        faction: Executive,
+        archetype: LimoDriver,
+        scale: 1.0,
+        waypoints: [(11.5, 4.5), (14.5, 4.5)],
+        yaw: 3.14159,
+      ),
+    ),
+    EntityDef(
+      pos: (10.5, 3.5),
+      kind: Enemy(
+        faction: Executive,
+        archetype: Ceo,
+        scale: 1.2,
+        waypoints: [(9.5, 3.5), (11.5, 3.5)],
+        yaw: 1.5708,
+      ),
     ),
     EntityDef(
       pos: (8.5, 10.5),
       kind: Interactable(
-        prompt: "Signal convoy (release)",
+        prompt: "Manual DNA sequencer",
         require: None,
-        action: ReleaseSubjects,
+        action: StartPuzzle("scientist_dna_manual"),
         texture_id: None,
         scale: 0.5,
       ),
@@ -45,17 +111,37 @@ FloorDef(
       pos: (10.5, 5.5),
       kind: Interactable(
         prompt: "Force surface door",
-        require: None,
+        require: Some("scientist_down"),
         action: OpenDoor(cell:(10,5), flag:Some("surface_open")),
         texture_id: None,
         scale: 0.5,
       ),
     ),
     EntityDef(
+      pos: (6.5, 3.5),
+      kind: Interactable(
+        prompt: "Confront CEO — free the subjects",
+        require: Some("scientist_down && surface_open"),
+        action: MoralChoice(flag: "ceo_confronted", release_subjects: true, score: 2),
+        texture_id: None,
+        scale: 0.55,
+      ),
+    ),
+    EntityDef(
+      pos: (14.5, 3.5),
+      kind: Interactable(
+        prompt: "Take the deal — leave with the convoy",
+        require: Some("scientist_down && surface_open"),
+        action: SetFlag("ceo_deal"),
+        texture_id: None,
+        scale: 0.55,
+      ),
+    ),
+    EntityDef(
       pos: (10.5, 13.2),
       kind: Interactable(
         prompt: "Final elevator",
-        require: Some("surface_open"),
+        require: Some("scientist_down && surface_open && (ceo_confronted || ceo_deal || ceo_down)"),
         action: CallElevator,
         texture_id: None,
         scale: 0.6,

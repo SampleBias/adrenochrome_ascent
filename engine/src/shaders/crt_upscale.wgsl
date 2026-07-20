@@ -1,8 +1,8 @@
-// CRT upscale shader for Adrenochrome Ascent.
+// CRT upscale shader for Adrenochrome Ascent (TODO-002 / TODO-034).
 //
 // Samples the 320×200 render target with nearest-neighbor filtering, applies
 // the active floor-cluster palette tint, then layers lo-fi horror post:
-// scanlines, vignette, Bayer dither, and subtle film grain.
+// scanlines, vignette, Bayer dither, phosphor glow, pain/serum flashes, grain.
 //
 // Style target: assets/images/style_reference/ (PS1/CRT liminal horror).
 
@@ -12,6 +12,8 @@
 @group(0) @binding(2) var<uniform> palette_tint: vec4<f32>;
 // x = scanline, y = vignette, z = dither, w = time (seconds).
 @group(0) @binding(3) var<uniform> crt_params: vec4<f32>;
+// x = pain flash, y = serum tint, z = phosphor glow, w = unused.
+@group(0) @binding(4) var<uniform> post_fx: vec4<f32>;
 
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
@@ -19,11 +21,9 @@ struct VertexOutput {
 };
 
 fn bayer4(p: vec2<f32>) -> f32 {
-    // Cheap ordered-dither threshold derived from pixel coords.
     let x = u32(abs(p.x)) % 4u;
     let y = u32(abs(p.y)) % 4u;
     let index = y * 4u + x;
-    // Bit-twiddle approximation of a 4×4 Bayer matrix (0..1).
     let bit = (index * 5u + (index / 4u) * 3u) % 16u;
     return f32(bit) / 16.0;
 }
@@ -40,14 +40,17 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     let vignette_strength = crt_params.y;
     let dither_strength = crt_params.z;
     let time = crt_params.w;
+    let pain = clamp(post_fx.x, 0.0, 1.0);
+    let serum = clamp(post_fx.y, 0.0, 1.0);
+    let phosphor = clamp(post_fx.z, 0.0, 1.0);
 
-    // Mild barrel distortion toward CRT glass (kept subtle so gameplay stays readable).
+    // Mild barrel distortion toward CRT glass.
     let centered = in.uv * 2.0 - 1.0;
     let barrel = 1.0 + dot(centered, centered) * 0.045;
     let warped_uv = centered * barrel * 0.5 + 0.5;
 
     // Soft chromatic aberration for that "broken CRT" edge.
-    let aberr = 0.0018 * length(centered);
+    let aberr = 0.0018 * length(centered) + pain * 0.0025;
     var color = textureSample(crt_source, crt_sampler, warped_uv);
     let r = textureSample(crt_source, crt_sampler, warped_uv + vec2<f32>(aberr, 0.0)).r;
     let b = textureSample(crt_source, crt_sampler, warped_uv - vec2<f32>(aberr, 0.0)).b;
@@ -56,12 +59,12 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     // Floor-cluster palette grade.
     var rgb = color.rgb * palette_tint.rgb;
 
-    // Horizontal scanlines (reference: blood hall / gun corridor).
+    // Horizontal scanlines.
     let scan = 0.5 + 0.5 * sin(warped_uv.y * 200.0 * 3.14159265);
     let scan_mod = mix(1.0, scan, scanline_strength);
     rgb = rgb * scan_mod;
 
-    // Edge vignette — darkness-forward horror framing.
+    // Edge vignette.
     let vig = 1.0 - dot(centered * vignette_strength, centered * vignette_strength);
     rgb = rgb * clamp(vig, 0.15, 1.0);
 
@@ -70,11 +73,20 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     let threshold = bayer4(px) - 0.5;
     rgb = rgb + threshold * dither_strength * 0.08;
 
-    // Animated grain so static frames still feel alive.
+    // Phosphor glow — soft green-white bloom on bright pixels.
+    let luma = dot(rgb, vec3<f32>(0.299, 0.587, 0.114));
+    let glow = vec3<f32>(0.35, 0.85, 0.45) * max(luma - 0.35, 0.0) * phosphor * 0.55;
+    rgb = rgb + glow;
+
+    // Pain flash (damage) + serum veil — integrated post, not UI sprites.
+    rgb = mix(rgb, vec3<f32>(0.85, 0.08, 0.1), pain * 0.55);
+    rgb = mix(rgb, vec3<f32>(0.15, 0.55, 0.75), serum * 0.35);
+
+    // Animated grain.
     let grain = (hash21(px + vec2<f32>(time * 37.0, time * 19.0)) - 0.5) * 0.045;
     rgb = rgb + grain;
 
-    // Slight crush into blacks (asylum / blood halls).
+    // Slight crush into blacks.
     rgb = max(rgb - vec3<f32>(0.02), vec3<f32>(0.0));
     rgb = clamp(rgb, vec3<f32>(0.0), vec3<f32>(1.0));
 

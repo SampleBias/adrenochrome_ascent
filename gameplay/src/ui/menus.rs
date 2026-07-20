@@ -1,13 +1,13 @@
-//! Lightweight state-overlay UI (TODO-005 / Sprint 3 vitals). Full pixel HUD is TODO-033.
+//! Lightweight state-overlay UI (TODO-005). In-game vitals live in the 320×200 pixel HUD (TODO-033).
 
 use bevy::prelude::*;
 
-use crate::floor_loader::LoadedFloorInfo;
 use crate::game::{CurrentFloor, EndingKind, GameState};
-use crate::enemy::{BossFight, WardenOverrides};
+use crate::enemy::{BossFight, ScientistFight, WardenOverrides};
 use crate::player::{
-    weapon_stats, Armor, Health, Inventory, Player, WeaponLoadout,
+    weapon_stats, Armor, Health, Inventory, Player, SerumEffect, WeaponLoadout,
 };
+use crate::puzzle::{DnaHudText, PuzzleRegistry};
 
 /// Marker for state overlay UI roots (despawned on state exit).
 #[derive(Component, Debug, Clone, Copy)]
@@ -121,7 +121,7 @@ pub fn spawn_ending(mut commands: Commands, asset_server: Res<AssetServer>, endi
             ));
             parent.spawn((
                 Text::new(format!(
-                    "{}\n\n[ENTER] Main Menu",
+                    "{}\n\nLimo engines idle on the mountain road.\n\n[ENTER] Main Menu",
                     ending.blurb()
                 )),
                 body,
@@ -138,63 +138,47 @@ pub struct VitalsHudText;
 #[derive(Component)]
 pub struct BossHudText;
 
-/// Tiny in-game floor readout + vitals (Sprint 3).
-pub fn spawn_ingame_hud(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    floor: Res<CurrentFloor>,
-    info: Res<LoadedFloorInfo>,
-) {
-    let font = title_font(&asset_server, 14.0);
-    let vitals_font = title_font(&asset_server, 15.0);
-    let title = if info.name.is_empty() {
-        format!("FLOOR {} — {}", floor.number, floor.cluster_name())
-    } else {
-        format!(
-            "FLOOR {} — {}\n{}",
-            info.number, info.name, info.subtitle
-        )
-    };
+/// Minimal help overlay — vitals/PA render in the CRT pixel HUD (TODO-033).
+pub fn spawn_ingame_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let font = title_font(&asset_server, 13.0);
     commands
         .spawn((
-            Name::new("InGameHud"),
+            Name::new("InGameHelp"),
             MenuUi,
             DespawnOnExit(GameState::InGame),
             Node {
                 position_type: PositionType::Absolute,
-                top: px(10),
-                left: px(12),
-                flex_direction: FlexDirection::Column,
-                row_gap: px(6),
+                bottom: px(8),
+                right: px(10),
                 ..default()
             },
         ))
         .with_children(|parent| {
             parent.spawn((
-                Text::new(format!(
-                    "{title}\n[E] Interact  [LMB/Ctrl] Fire  [1-4] Weapon  [L] Elevator  [TAB] Cursor"
-                )),
+                Text::new("[E] Interact  [1-4] Weapon  [L] Elevator  [TAB] Cursor"),
                 font,
-                TextColor(Color::srgba(0.85, 0.8, 0.75, 0.85)),
+                TextColor(Color::srgba(0.75, 0.72, 0.68, 0.55)),
             ));
-            parent.spawn((
-                VitalsHudText,
-                Text::new("HP --  ARM --  AMMO --"),
-                vitals_font.clone(),
-                TextColor(Color::srgba(0.9, 0.55, 0.45, 0.95)),
-            ));
-            parent.spawn((
-                BossHudText,
-                Text::new(""),
-                vitals_font,
-                TextColor(Color::srgba(0.85, 0.7, 0.35, 0.95)),
-            ));
+            // Keep markers so legacy sync systems stay harmless if queried empty.
+            parent.spawn((VitalsHudText, Text::new(""), font_size_zero(&asset_server)));
+            parent.spawn((BossHudText, Text::new(""), font_size_zero(&asset_server)));
+            parent.spawn((DnaHudText, Text::new(""), font_size_zero(&asset_server)));
         });
+}
+
+fn font_size_zero(asset_server: &AssetServer) -> TextFont {
+    TextFont {
+        font: FontSource::Handle(asset_server.load("fonts/FiraSans-Bold.ttf")),
+        font_size: FontSize::Px(1.0),
+        ..default()
+    }
 }
 
 /// Refresh health / armor / weapon / ammo readout.
 pub fn sync_vitals_hud(
     player: Query<(&Health, &Armor, &Inventory, &WeaponLoadout), With<Player>>,
+    serum: Res<SerumEffect>,
+    registry: Res<PuzzleRegistry>,
     mut texts: Query<&mut Text, With<VitalsHudText>>,
 ) {
     let Ok((health, armor, inv, loadout)) = player.single() else {
@@ -205,23 +189,39 @@ pub fn sync_vitals_hud(
     };
     let stats = weapon_stats(loadout.current);
     let ammo = inv.ammo_for(stats.ammo);
+    let serum_tag = if serum.active { "  SERUM!" } else { "" };
+    let limbs = registry.counter("collected_limb");
     **text = format!(
-        "HP {hp:.0}  ARM {arm:.0}  |  {name}  AMMO {ammo}   (F5/F6/F7 grant)",
+        "HP {hp:.0}  ARM {arm:.0}  |  {name}  AMMO {ammo}  limbs {limbs}{serum_tag}",
         hp = health.current,
         arm = armor.current,
         name = stats.name,
         ammo = ammo,
+        limbs = limbs,
+        serum_tag = serum_tag,
     );
 }
 
 pub fn sync_boss_hud(
     fight: Res<BossFight>,
     warden: Res<WardenOverrides>,
+    scientist: Res<ScientistFight>,
     mut texts: Query<&mut Text, With<BossHudText>>,
 ) {
     let Ok(mut text) = texts.single_mut() else {
         return;
     };
+    if scientist.active || scientist.defeated {
+        if scientist.defeated {
+            **text = "SCIENTIST DOWN — research cleared".into();
+            return;
+        }
+        **text = format!(
+            "SCIENTIST  phase {}  |  DNA when stunned — Injector cures serum",
+            scientist.phase
+        );
+        return;
+    }
     if warden.active || warden.defeated {
         if warden.defeated {
             **text = "WARDEN DOWN — security cleared".into();

@@ -66,7 +66,11 @@ FloorDef(
       kind: Interactable(
         prompt: "Use security terminal",
         require: Some("has_keycard"),
-        action: SetFlag("elevator_unlocked"),
+        action: OpenTerminal(
+          title: "SECURITY TERMINAL",
+          body: "Bay lock override.\nConfirm uplink to unlock the service elevator.",
+          set_flag: Some("elevator_unlocked"),
+        ),
         texture_id: None,
         scale: 0.5,
       ),

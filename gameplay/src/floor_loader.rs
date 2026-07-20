@@ -8,10 +8,11 @@ use adrenochrome_engine::{ActivePalette, Billboard, HandOverlay, MapGrid, RayCam
 use crate::combat::{CombatTarget, HitFlash};
 use crate::enemy::{
     should_spawn_faction, spawn_enemy, spawn_turret, BossFight, EnemyArchetype, Faction,
-    FactionRegistry, WardenOverrides,
+    FactionRegistry, ScientistFight, WardenOverrides, TEX_LIMB,
 };
 use crate::hazard::{spawn_crate, TimedValveState};
-use crate::interact::Interactable;
+use crate::interact::{Interactable, LimbPickup};
+use crate::puzzle::DnaSequencer;
 use crate::player::{Player, PlayerMotor};
 use crate::puzzle::PuzzleRegistry;
 
@@ -47,6 +48,8 @@ pub fn load_current_floor(
     mut info: ResMut<LoadedFloorInfo>,
     mut boss: ResMut<BossFight>,
     mut warden: ResMut<WardenOverrides>,
+    mut scientist: ResMut<ScientistFight>,
+    mut dna: ResMut<DnaSequencer>,
     mut valves: ResMut<TimedValveState>,
     factions: Res<FactionRegistry>,
     floor_entities: Query<Entity, With<FloorEntity>>,
@@ -65,12 +68,17 @@ pub fn load_current_floor(
     }
     *boss = BossFight::default();
     *warden = WardenOverrides::default();
+    *scientist = ScientistFight::default();
+    *dna = DnaSequencer::default();
     valves.active.clear();
     if def.number == 3 {
         boss.arena_center = Vec2::new(10.5, 7.5);
     }
     if def.number == 7 {
         warden.arena_center = Vec2::new(10.5, 7.5);
+    }
+    if def.number == 10 {
+        scientist.arena_center = Vec2::new(10.5, 6.5);
     }
 
     *map = def.to_map_grid();
@@ -134,6 +142,15 @@ pub fn load_current_floor(
             EntityKind::Turret { yaw, scale } => {
                 spawn_turret(&mut commands, pos, *yaw, *scale);
             }
+            EntityKind::Limb { amount, scale } => {
+                commands.spawn((
+                    FloorEntity,
+                    Name::new("LimbPickup"),
+                    LimbPickup { amount: *amount },
+                    Billboard::new(pos, TEX_LIMB, *scale),
+                    Transform::from_xyz(pos.x, pos.y, 0.0),
+                ));
+            }
             EntityKind::Interactable {
                 prompt,
                 require,
@@ -171,6 +188,8 @@ pub fn unload_floor(
     mut registry: ResMut<PuzzleRegistry>,
     mut boss: ResMut<BossFight>,
     mut warden: ResMut<WardenOverrides>,
+    mut scientist: ResMut<ScientistFight>,
+    mut dna: ResMut<DnaSequencer>,
     mut valves: ResMut<TimedValveState>,
     mut factions: ResMut<FactionRegistry>,
 ) {
@@ -180,6 +199,8 @@ pub fn unload_floor(
     registry.clear();
     *boss = BossFight::default();
     *warden = WardenOverrides::default();
+    *scientist = ScientistFight::default();
+    *dna = DnaSequencer::default();
     valves.active.clear();
     factions.clear();
 }

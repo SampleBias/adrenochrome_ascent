@@ -5,6 +5,7 @@ use bevy::prelude::*;
 use adrenochrome_engine::HandOverlay;
 
 use super::constants::{HAND_ANCHOR, HAND_SCALE, PITCH_MAX};
+use super::perks::MutationPerks;
 use super::vitals::PainFlash;
 use super::weapons::{weapon_stats, AdrenoVision, MuzzleFlash, WeaponLoadout};
 use crate::interact::InteractionPrompt;
@@ -22,10 +23,12 @@ pub fn update_hand_viewmodel(
     prompt: Res<InteractionPrompt>,
     muzzle: Res<MuzzleFlash>,
     vision: Res<AdrenoVision>,
+    perks: Res<MutationPerks>,
     loadout: Query<&WeaponLoadout>,
     motor: Query<&PlayerMotor>,
     mut hands: Query<&mut HandOverlay>,
 ) {
+    let night = vision.active || perks.night_vision;
     let Ok(loadout) = loadout.single() else {
         return;
     };
@@ -50,7 +53,7 @@ pub fn update_hand_viewmodel(
         hand.glow_pulse = match state {
             HandState::InteractGlow => 6.0,
             HandState::Fire => 10.0,
-            HandState::Idle if vision.active => 4.0,
+            HandState::Idle if night => 4.0,
             HandState::Idle => 2.0,
         };
         hand.muzzle = (muzzle.timer / 0.1).clamp(0.0, 1.0);
@@ -67,7 +70,7 @@ pub fn update_hand_viewmodel(
                 } else {
                     0.0
                 });
-        if vision.active {
+        if night {
             hand.scale *= 1.05;
         }
     }

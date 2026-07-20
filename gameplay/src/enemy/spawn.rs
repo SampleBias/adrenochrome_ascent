@@ -10,6 +10,7 @@ use crate::floor_loader::FloorEntity;
 use super::archetype::{archetype_stats, make_ai};
 use super::boss::LieutenantBoss;
 use super::components::{Enemy, EnemyArchetype, Faction};
+use super::scientist::ScientistBoss;
 use super::warden::WardenBoss;
 
 /// Spawn a fully wired enemy entity at `pos`.
@@ -49,6 +50,9 @@ pub fn spawn_enemy(
         }
         EnemyArchetype::Warden => {
             entity.insert(WardenBoss::default());
+        }
+        EnemyArchetype::Scientist => {
+            entity.insert(ScientistBoss::default());
         }
         _ => {}
     }

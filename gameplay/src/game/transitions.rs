@@ -7,7 +7,9 @@ use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
 
 use adrenochrome_engine::{ActivePalette, RayCamera};
 
-use crate::player::{Armor, Health, Inventory, Player, PlayerMotor, WeaponLoadout};
+use crate::enemy::{FactionRegistry, FloorAlarm};
+use crate::player::{Armor, Health, Inventory, MutationPerks, Player, PlayerMotor, WeaponLoadout};
+use crate::puzzle::PuzzleRegistry;
 
 use super::floor::{CurrentFloor, EndingKind};
 use super::states::GameState;
@@ -104,11 +106,19 @@ fn complete_elevator(floor: &mut CurrentFloor, next_state: &mut NextState<GameSt
 pub fn enter_main_menu_reset(
     mut floor: ResMut<CurrentFloor>,
     mut ending: ResMut<EndingKind>,
+    mut registry: ResMut<PuzzleRegistry>,
+    mut perks: ResMut<MutationPerks>,
+    mut factions: ResMut<FactionRegistry>,
+    mut alarm: ResMut<FloorAlarm>,
     mut commands: Commands,
     players: Query<Entity, With<Player>>,
 ) {
     floor.reset();
     *ending = EndingKind::default();
+    registry.clear();
+    perks.clear();
+    factions.clear();
+    alarm.clear();
     for entity in &players {
         commands.entity(entity).despawn();
     }

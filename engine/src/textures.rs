@@ -62,6 +62,27 @@ impl TextureSet {
                 gen_crate_sprite(),                               // 30
                 gen_turret_sprite(false),                          // 31
                 gen_turret_sprite(true),                           // 32 firing
+                // Sprint 6 Research archetypes
+                gen_faction_enemy(EnemyArt::ResearcherMale, false),   // 33
+                gen_faction_enemy(EnemyArt::ResearcherMale, true),    // 34
+                gen_faction_enemy(EnemyArt::ResearcherFemale, false), // 35
+                gen_faction_enemy(EnemyArt::ResearcherFemale, true),  // 36
+                gen_faction_enemy(EnemyArt::MutatedAide, false),      // 37
+                gen_faction_enemy(EnemyArt::MutatedAide, true),       // 38
+                gen_faction_enemy(EnemyArt::SerumZombie, false),      // 39
+                gen_faction_enemy(EnemyArt::SerumZombie, true),       // 40
+                gen_faction_enemy(EnemyArt::Scientist, false),        // 41
+                gen_faction_enemy(EnemyArt::Scientist, true),         // 42
+                gen_limb_sprite(),                                   // 43
+                // Sprint 7 Executive archetypes
+                gen_faction_enemy(EnemyArt::Bodyguard, false),        // 44
+                gen_faction_enemy(EnemyArt::Bodyguard, true),         // 45
+                gen_faction_enemy(EnemyArt::AdminSecretary, false),   // 46
+                gen_faction_enemy(EnemyArt::AdminSecretary, true),    // 47
+                gen_faction_enemy(EnemyArt::LimoDriver, false),       // 48
+                gen_faction_enemy(EnemyArt::LimoDriver, true),        // 49
+                gen_faction_enemy(EnemyArt::Ceo, false),              // 50
+                gen_faction_enemy(EnemyArt::Ceo, true),               // 51
             ],
         }
     }
@@ -282,6 +303,15 @@ enum EnemyArt {
     PatrolSecurity,
     HazardTech,
     Warden,
+    ResearcherMale,
+    ResearcherFemale,
+    MutatedAide,
+    SerumZombie,
+    Scientist,
+    Bodyguard,
+    AdminSecretary,
+    LimoDriver,
+    Ceo,
 }
 
 fn gen_faction_enemy(kind: EnemyArt, attack: bool) -> Vec<[u8; 4]> {
@@ -295,11 +325,27 @@ fn gen_faction_enemy(kind: EnemyArt, attack: bool) -> Vec<[u8; 4]> {
         EnemyArt::PatrolSecurity => ([12, 14, 20, 255], [40, 90, 60, 255], [220, 200, 60, 255]),
         EnemyArt::HazardTech => ([16, 18, 14, 255], [60, 100, 40, 255], [240, 160, 40, 255]),
         EnemyArt::Warden => ([8, 12, 16, 255], [30, 50, 70, 255], [60, 220, 160, 255]),
+        EnemyArt::ResearcherMale => ([20, 18, 24, 255], [180, 180, 190, 255], [40, 160, 200, 255]),
+        EnemyArt::ResearcherFemale => ([18, 16, 22, 255], [200, 170, 180, 255], [200, 80, 160, 255]),
+        EnemyArt::MutatedAide => ([40, 50, 30, 255], [80, 120, 50, 255], [180, 255, 80, 255]),
+        EnemyArt::SerumZombie => ([30, 40, 50, 255], [60, 90, 110, 255], [80, 220, 255, 255]),
+        EnemyArt::Scientist => ([12, 10, 18, 255], [40, 30, 60, 255], [160, 80, 255, 255]),
+        EnemyArt::Bodyguard => ([8, 8, 12, 255], [20, 22, 28, 255], [180, 160, 80, 255]),
+        EnemyArt::AdminSecretary => ([18, 16, 20, 255], [40, 50, 70, 255], [220, 200, 120, 255]),
+        EnemyArt::LimoDriver => ([10, 12, 16, 255], [30, 35, 45, 255], [200, 40, 40, 255]),
+        EnemyArt::Ceo => ([6, 6, 10, 255], [16, 18, 24, 255], [220, 190, 90, 255]),
     };
 
     let wide = matches!(
         kind,
-        EnemyArt::Heavy | EnemyArt::Lieutenant | EnemyArt::RiotGuard | EnemyArt::Warden
+        EnemyArt::Heavy
+            | EnemyArt::Lieutenant
+            | EnemyArt::RiotGuard
+            | EnemyArt::Warden
+            | EnemyArt::SerumZombie
+            | EnemyArt::Scientist
+            | EnemyArt::Bodyguard
+            | EnemyArt::Ceo
     );
     let (leg_l, leg_r, torso_x0, torso_x1, head_r) = if wide {
         (18, 28, 16, 48, 48)
@@ -390,7 +436,75 @@ fn gen_faction_enemy(kind: EnemyArt, attack: bool) -> Vec<[u8; 4]> {
                 fill_rect(&mut buf, 20, 10, 44, 18, [80, 255, 180, 255]);
             }
         }
+        EnemyArt::ResearcherMale => {
+            fill_rect(&mut buf, 22, 8, 42, 14, accent); // goggles
+            if attack {
+                fill_rect(&mut buf, 40, 28, 52, 40, [255, 100, 100, 255]); // syringe flee
+            }
+        }
+        EnemyArt::ResearcherFemale => {
+            fill_rect(&mut buf, 24, 4, 40, 12, [80, 40, 60, 255]); // hair
+            fill_rect(&mut buf, 22, 10, 42, 16, accent);
+            if attack {
+                fill_rect(&mut buf, 8, 24, 18, 36, accent);
+            }
+        }
+        EnemyArt::MutatedAide => {
+            fill_rect(&mut buf, 10, 22, 20, 40, accent); // claws
+            fill_rect(&mut buf, 44, 22, 54, 40, accent);
+            if attack {
+                fill_rect(&mut buf, 6, 18, 22, 44, accent);
+                fill_rect(&mut buf, 42, 18, 58, 44, accent);
+            }
+        }
+        EnemyArt::SerumZombie => {
+            fill_rect(&mut buf, 28, 20, 36, 36, accent); // glowing chest vial
+            if attack {
+                fill_rect(&mut buf, 24, 16, 40, 40, [120, 240, 255, 255]);
+            }
+        }
+        EnemyArt::Scientist => {
+            fill_rect(&mut buf, 16, 8, 48, 16, accent); // wild hair / crown
+            fill_rect(&mut buf, 26, 28, 38, 40, [200, 80, 255, 255]); // serum flask
+            if attack {
+                fill_rect(&mut buf, 20, 24, 44, 44, [180, 100, 255, 255]);
+            }
+        }
+        EnemyArt::Bodyguard => {
+            fill_rect(&mut buf, 14, 18, 50, 52, accent); // gold trim shield
+            if attack {
+                fill_rect(&mut buf, 10, 16, 54, 54, [220, 200, 100, 255]);
+            }
+        }
+        EnemyArt::AdminSecretary => {
+            fill_rect(&mut buf, 22, 26, 42, 38, accent); // clipboard
+            if attack {
+                fill_rect(&mut buf, 18, 12, 46, 20, [255, 80, 80, 255]); // alarm flare
+            }
+        }
+        EnemyArt::LimoDriver => {
+            fill_rect(&mut buf, 20, 8, 44, 16, accent); // cap
+            fill_rect(&mut buf, 26, 30, 38, 42, [40, 40, 50, 255]); // keys
+            if attack {
+                fill_rect(&mut buf, 40, 28, 54, 44, accent);
+            }
+        }
+        EnemyArt::Ceo => {
+            fill_rect(&mut buf, 18, 6, 46, 14, accent); // slick hair
+            fill_rect(&mut buf, 24, 28, 40, 40, [180, 150, 60, 255]); // tie pin
+            if attack {
+                fill_rect(&mut buf, 16, 20, 48, 48, [240, 210, 100, 255]);
+            }
+        }
     }
+    buf
+}
+
+fn gen_limb_sprite() -> Vec<[u8; 4]> {
+    let mut buf = solid([0, 0, 0, 0]);
+    fill_rect(&mut buf, 20, 18, 44, 50, [160, 80, 80, 255]);
+    fill_rect(&mut buf, 24, 22, 40, 46, [120, 50, 50, 255]);
+    fill_rect(&mut buf, 28, 10, 36, 22, [180, 100, 100, 255]);
     buf
 }
 
