@@ -8,7 +8,9 @@
 use bevy::prelude::*;
 
 use crate::{
+    attract::paint_attract_if_needed,
     billboard::{Billboard, HandOverlay},
+    frame_source::FrameSource,
     map::MapGrid,
     palette::{RENDER_HEIGHT, RENDER_WIDTH},
     pixel_hud::{draw_pixel_hud, PixelHud},
@@ -44,13 +46,25 @@ pub fn render_frame(
     map: Res<MapGrid>,
     textures: Res<TextureSet>,
     target: Res<LowResTarget>,
+    frame_source: Res<FrameSource>,
     mut images: ResMut<Assets<Image>>,
     mut depth: ResMut<DepthBuffer>,
     billboards: Query<&Billboard>,
     hands: Query<&HandOverlay>,
     hud: Res<PixelHud>,
     time: Res<Time>,
+    mut attract_tick: Local<f32>,
 ) {
+    // Title/menus: light attract path at ~8 FPS (cuts CPU→GPU upload pressure).
+    if matches!(*frame_source, FrameSource::AttractTitle) {
+        let t = time.elapsed_secs();
+        if frame_source.is_changed() || t - *attract_tick >= 0.125 {
+            *attract_tick = t;
+            paint_attract_if_needed(&target, &mut images, t);
+        }
+        return;
+    }
+
     let Some(mut image) = images.get_mut(&target.0) else {
         return;
     };

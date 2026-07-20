@@ -302,25 +302,30 @@ pub fn sync_enemy_death_state(
 /// Patrol Security radio: alert nearby same-faction allies to Chase.
 pub fn radio_alert_allies(
     mut events: MessageReader<PlayerDetected>,
-    detectors: Query<(Entity, &Enemy, &EnemyAi, &Billboard)>,
     mut allies: Query<(Entity, &Enemy, &mut EnemyAi, &Billboard)>,
 ) {
     const RADIO_RANGE: f32 = 8.0;
     for ev in events.read() {
-        let Ok((_e, det_enemy, det_ai, det_bb)) = detectors.get(ev.enemy) else {
+        // Snapshot detector fields first so we can mutably iterate allies
+        // without a second conflicting EnemyAi query (Bevy B0001).
+        let Some((det_faction, det_pos, radio_alert)) = allies
+            .get(ev.enemy)
+            .ok()
+            .map(|(_, enemy, ai, bb)| (enemy.faction, bb.pos, ai.radio_alert))
+        else {
             continue;
         };
-        if !det_ai.radio_alert {
+        if !radio_alert {
             continue;
         }
         for (ally_e, ally_enemy, mut ally_ai, ally_bb) in &mut allies {
             if ally_e == ev.enemy {
                 continue;
             }
-            if ally_enemy.faction != det_enemy.faction {
+            if ally_enemy.faction != det_faction {
                 continue;
             }
-            if det_bb.pos.distance(ally_bb.pos) > RADIO_RANGE {
+            if det_pos.distance(ally_bb.pos) > RADIO_RANGE {
                 continue;
             }
             if matches!(

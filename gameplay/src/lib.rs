@@ -73,6 +73,7 @@ impl Plugin for GameplayPlugin {
             .add_systems(
                 OnEnter(GameState::MainMenu),
                 (
+                    game::set_frame_attract,
                     floor_loader::unload_floor,
                     game::enter_main_menu_reset,
                     game::release_mouse,
@@ -84,6 +85,7 @@ impl Plugin for GameplayPlugin {
                 OnEnter(GameState::InGame),
                 (
                     (
+                        game::set_frame_raycast,
                         enemy::reset_floor_alarm,
                         floor_loader::begin_ingame_enter,
                         floor_loader::load_current_floor,
@@ -147,6 +149,7 @@ impl Plugin for GameplayPlugin {
                 Update,
                 (
                     ui::sync_main_menu_cursor.run_if(in_state(GameState::MainMenu)),
+                    ui::blink_push_start.run_if(in_state(GameState::MainMenu)),
                     ui::sync_options_body.run_if(in_state(GameState::Options)),
                     game::apply_crt_settings,
                     game::apply_fullscreen_setting,

@@ -9,7 +9,8 @@ authors = ["Adrenochrome Ascent Team"]
 description = "A retro first-person horror-action game built in Rust + Bevy"
 
 [workspace.dependencies]
-bevy = "0.19"
+# Bevy's default `audio` feature only enables Vorbis; our banks are PCM WAV.
+bevy = { version = "0.19", features = ["wav"] }
 bevy_egui = "0.41"
 serde = { version = "1", features = ["derive"] }
 ron = "0.8"

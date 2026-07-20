@@ -3,6 +3,8 @@
 A first-person lo-fi horror game built with [Bevy](https://bevyengine.org).
 Renders at **320×200** with a CRT upscale (scanlines, vignette, dither, palette grades).
 
+![Title screen — NES-style attract menu over CRT mansion backdrop](assets/images/screenshots/title_screen.png)
+
 Style references live in [`assets/images/style_reference/`](assets/images/style_reference/) —
 blood-red halls, toxic green lobbies, liminal teal corridors, neon player hand.
 

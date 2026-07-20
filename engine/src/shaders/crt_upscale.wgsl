@@ -5,20 +5,19 @@
 // scanlines, vignette, Bayer dither, phosphor glow, pain/serum flashes, grain.
 //
 // Style target: assets/images/style_reference/ (PS1/CRT liminal horror).
+//
+// Material2d bind layout: group 0 = view, group 1 = mesh, group 2 = material.
 
-@group(0) @binding(0) var crt_source: texture_2d<f32>;
-@group(0) @binding(1) var crt_sampler: sampler;
+#import bevy_sprite::mesh2d_vertex_output::VertexOutput
+
+@group(2) @binding(0) var crt_source: texture_2d<f32>;
+@group(2) @binding(1) var crt_sampler: sampler;
 // `palette_tint` from `CrtMaterial::palette_tint`.
-@group(0) @binding(2) var<uniform> palette_tint: vec4<f32>;
+@group(2) @binding(2) var<uniform> palette_tint: vec4<f32>;
 // x = scanline, y = vignette, z = dither, w = time (seconds).
-@group(0) @binding(3) var<uniform> crt_params: vec4<f32>;
+@group(2) @binding(3) var<uniform> crt_params: vec4<f32>;
 // x = pain flash, y = serum tint, z = phosphor glow, w = unused.
-@group(0) @binding(4) var<uniform> post_fx: vec4<f32>;
-
-struct VertexOutput {
-    @builtin(position) position: vec4<f32>,
-    @location(0) uv: vec2<f32>,
-};
+@group(2) @binding(4) var<uniform> post_fx: vec4<f32>;
 
 fn bayer4(p: vec2<f32>) -> f32 {
     let x = u32(abs(p.x)) % 4u;

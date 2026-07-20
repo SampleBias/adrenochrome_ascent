@@ -38,19 +38,19 @@ pub fn apply_crt_settings(
     }
     for (_, mat) in materials.iter_mut() {
         if settings.crt_enabled {
-            mat.crt_params[0] = DEFAULT_SCANLINE;
-            mat.crt_params[1] = 0.85;
-            mat.crt_params[2] = if settings.dither_enabled {
+            mat.crt_params.x = DEFAULT_SCANLINE;
+            mat.crt_params.y = 0.85;
+            mat.crt_params.z = if settings.dither_enabled {
                 DEFAULT_DITHER
             } else {
                 0.0
             };
-            mat.post_fx[2] = 0.55;
+            mat.post_fx.z = 0.55;
         } else {
-            mat.crt_params[0] = 0.0;
-            mat.crt_params[1] = 0.15;
-            mat.crt_params[2] = 0.0;
-            mat.post_fx[2] = 0.0;
+            mat.crt_params.x = 0.0;
+            mat.crt_params.y = 0.15;
+            mat.crt_params.z = 0.0;
+            mat.post_fx.z = 0.0;
         }
     }
 }

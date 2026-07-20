@@ -10,7 +10,7 @@ use bevy::{
 };
 
 use crate::{
-    crt_material::{CrtFullscreenQuad, CrtMaterial, UpscaleCamera},
+    crt_material::{CrtFullscreenQuad, CrtMaterial, CrtMaterialHandle, UpscaleCamera},
     palette::{ActivePalette, Palette, RENDER_HEIGHT, RENDER_WIDTH},
 };
 
@@ -46,6 +46,7 @@ pub fn setup_render_target(
 
     let tint = Palette::Red.tint();
     let crt_material = materials.add(CrtMaterial::new(target_handle, tint));
+    commands.insert_resource(CrtMaterialHandle(crt_material.clone()));
     let quad = meshes.add(Rectangle::default());
 
     commands.spawn((

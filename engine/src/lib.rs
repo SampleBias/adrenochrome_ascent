@@ -5,9 +5,11 @@
 
 use bevy::{asset::embedded_asset, prelude::*};
 
+pub mod attract;
 pub mod billboard;
 pub mod crt_material;
 pub mod demo;
+pub mod frame_source;
 pub mod map;
 pub mod palette;
 pub mod pixel_hud;
@@ -19,8 +21,9 @@ pub mod textures;
 pub use billboard::{Billboard, HandOverlay};
 pub use crt_material::{
     set_crt_post_fx, update_crt_palette, update_crt_time, CrtFullscreenQuad, CrtMaterial,
-    UpscaleCamera, DEFAULT_DITHER, DEFAULT_SCANLINE, DEFAULT_VIGNETTE,
+    CrtMaterialHandle, UpscaleCamera, DEFAULT_DITHER, DEFAULT_SCANLINE, DEFAULT_VIGNETTE,
 };
+pub use frame_source::FrameSource;
 pub use map::MapGrid;
 pub use palette::{ActivePalette, Palette, RENDER_HEIGHT, RENDER_WIDTH};
 pub use pixel_hud::PixelHud;
@@ -45,6 +48,7 @@ impl Plugin for EnginePlugin {
         app.add_plugins(bevy::sprite_render::Material2dPlugin::<CrtMaterial>::default())
             .init_resource::<raycaster::DepthBuffer>()
             .init_resource::<PixelHud>()
+            .init_resource::<FrameSource>()
             .insert_resource(TextureSet::procedural())
             // Defaults until gameplay floor loader replaces them.
             .insert_resource(MapGrid::from_rows(&["###", "#.#", "###"]))

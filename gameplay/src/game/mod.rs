@@ -10,6 +10,6 @@ pub use settings::{apply_crt_settings, apply_fullscreen_setting, GameSettings};
 pub use states::GameState;
 pub use transitions::{
     apply_floor_palette, enter_elevator, enter_in_game_spawn_player, enter_main_menu_reset,
-    flow_input, release_mouse, request_elevator, tick_elevator, watch_player_death, ElevatorTimer,
-    MenuCursor, OptionsReturn, SoftInGameResume,
+    flow_input, release_mouse, request_elevator, set_frame_attract, set_frame_raycast,
+    tick_elevator, watch_player_death, ElevatorTimer, MenuCursor, OptionsReturn, SoftInGameResume,
 };

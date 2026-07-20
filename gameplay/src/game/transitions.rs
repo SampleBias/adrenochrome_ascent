@@ -5,7 +5,7 @@ use std::time::Duration;
 use bevy::prelude::*;
 use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
 
-use adrenochrome_engine::{ActivePalette, RayCamera};
+use adrenochrome_engine::{ActivePalette, FrameSource, RayCamera};
 
 use crate::enemy::{FactionRegistry, FloorAlarm};
 use crate::player::{Armor, Health, Inventory, MutationPerks, Player, PlayerMotor, WeaponLoadout};
@@ -63,6 +63,16 @@ pub enum OptionsReturn {
 /// When true, the next InGame enter skips floor reload (ESC options resume).
 #[derive(Resource, Debug, Clone, Copy, Default)]
 pub struct SoftInGameResume(pub bool);
+
+/// Title / menu screens use the attract framebuffer (not the raycaster).
+pub fn set_frame_attract(mut source: ResMut<FrameSource>) {
+    *source = FrameSource::AttractTitle;
+}
+
+/// In-game uses the software raycaster.
+pub fn set_frame_raycast(mut source: ResMut<FrameSource>) {
+    *source = FrameSource::Raycast;
+}
 
 /// Apply the floor cluster palette when entering a playable floor.
 pub fn apply_floor_palette(floor: Res<CurrentFloor>, mut active: ResMut<ActivePalette>) {
