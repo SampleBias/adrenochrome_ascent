@@ -11,7 +11,7 @@ use crate::game::{EndingKind, GameState};
 use crate::hazard::TimedValveState;
 use crate::puzzle::{apply_effects, DnaSequencer, PuzzleRegistry};
 use crate::audio::PaAnnouncement;
-use crate::ui::TerminalSession;
+use crate::ui::{LevelMapState, TerminalSession};
 
 /// Max interaction reach in map cells.
 pub const INTERACT_RANGE: f32 = 2.2;
@@ -45,9 +45,20 @@ pub fn update_interaction_prompt(
     camera: Res<RayCamera>,
     map: Res<MapGrid>,
     registry: Res<PuzzleRegistry>,
+    map_state: Res<LevelMapState>,
     mut prompt: ResMut<InteractionPrompt>,
     query: Query<(&Interactable, &Transform)>,
 ) {
+    if map_state.open {
+        prompt.text = None;
+        prompt.blocked = false;
+        return;
+    }
+    if map_state.locked_flash > 0.0 {
+        prompt.text = Some("MAP LOCKED — complete the first challenge".into());
+        prompt.blocked = true;
+        return;
+    }
     let wall_dist = cast_ray(&map, camera.pos, camera.dir).0;
     let mut best: Option<(f32, String, bool)> = None;
 
@@ -226,6 +237,8 @@ fn apply_action(
                 _ => "ACGT",
             };
             dna.start(id.clone(), seq);
+            // Floor 10 first-challenge map unlock.
+            registry.set("dna_manual_started", true);
         }
         InteractAction::OpenTerminal {
             title,

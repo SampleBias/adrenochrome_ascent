@@ -50,8 +50,8 @@ impl Palette {
     /// screenshots while still letting authored sprite colors read through.
     pub fn tint(self) -> [f32; 4] {
         match self {
-            // Blood and shadow (refs 02, 03).
-            Palette::Red => [1.15, 0.38, 0.36, 1.0],
+            // Blood and shadow — still arterial, but midtones stay readable.
+            Palette::Red => [1.08, 0.52, 0.48, 1.0],
             // Radioactive lobby green (ref 01).
             Palette::Green => [0.42, 1.05, 0.48, 1.0],
             // Cold checkered-hall teal (ref 04).

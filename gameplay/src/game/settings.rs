@@ -4,7 +4,9 @@ use bevy::prelude::*;
 use bevy::window::{MonitorSelection, PrimaryWindow, WindowMode};
 use serde::{Deserialize, Serialize};
 
-use adrenochrome_engine::{CrtMaterial, DEFAULT_DITHER, DEFAULT_SCANLINE};
+use adrenochrome_engine::{
+    CrtMaterial, DEFAULT_DITHER, DEFAULT_PHOSPHOR, DEFAULT_SCANLINE, DEFAULT_VIGNETTE,
+};
 
 /// Global options (TODO-040).
 #[derive(Resource, Debug, Clone, Copy, Serialize, Deserialize)]
@@ -39,13 +41,13 @@ pub fn apply_crt_settings(
     for (_, mat) in materials.iter_mut() {
         if settings.crt_enabled {
             mat.crt_params.x = DEFAULT_SCANLINE;
-            mat.crt_params.y = 0.85;
+            mat.crt_params.y = DEFAULT_VIGNETTE;
             mat.crt_params.z = if settings.dither_enabled {
                 DEFAULT_DITHER
             } else {
                 0.0
             };
-            mat.post_fx.z = 0.55;
+            mat.post_fx.z = DEFAULT_PHOSPHOR;
         } else {
             mat.crt_params.x = 0.0;
             mat.crt_params.y = 0.15;

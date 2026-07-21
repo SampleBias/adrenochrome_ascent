@@ -26,10 +26,10 @@ use crate::palette::ActivePalette;
 /// Embedded-asset path for the CRT upscale WGSL shader.
 const CRT_SHADER_PATH: &str = "embedded://adrenochrome_engine/shaders/crt_upscale.wgsl";
 
-/// Default CRT look tuned to the style-reference screenshots.
-pub const DEFAULT_SCANLINE: f32 = 0.42;
-pub const DEFAULT_VIGNETTE: f32 = 0.85;
-pub const DEFAULT_DITHER: f32 = 0.75;
+/// Default CRT look — readable playfield, dirt/atmosphere on the rim.
+pub const DEFAULT_SCANLINE: f32 = 0.32;
+pub const DEFAULT_VIGNETTE: f32 = 0.78;
+pub const DEFAULT_DITHER: f32 = 0.55;
 pub const DEFAULT_PHOSPHOR: f32 = 0.55;
 
 /// Fullscreen material that upscales the low-res render target.

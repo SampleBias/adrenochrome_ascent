@@ -65,7 +65,7 @@ pub fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                 width: percent(100),
                 height: percent(100),
                 flex_direction: FlexDirection::Column,
-                justify_content: JustifyContent::SpaceBetween,
+                justify_content: JustifyContent::FlexStart,
                 align_items: AlignItems::Center,
                 padding: UiRect::axes(px(24), px(28)),
                 ..default()
@@ -103,13 +103,20 @@ pub fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ));
                 });
 
-            // Mid: menu rows with NES cursor.
+            // Spacer clears the mansion silhouette so the menu sits below it.
+            parent.spawn((Node {
+                flex_grow: 1.0,
+                ..default()
+            },));
+
+            // Menu rows with NES cursor — centered under the house.
             parent
                 .spawn((
                     Node {
                         flex_direction: FlexDirection::Column,
                         align_items: AlignItems::FlexStart,
                         row_gap: px(8),
+                        margin: UiRect::bottom(px(10)),
                         ..default()
                     },
                 ))
@@ -421,7 +428,7 @@ pub fn spawn_ingame_hud(mut commands: Commands, asset_server: Res<AssetServer>) 
         ))
         .with_children(|parent| {
             parent.spawn((
-                Text::new("[E] Interact  [1-4] Weapon  [ESC] Options"),
+                Text::new("[E] Interact  [M] Map  [1-4] Weapon  [ESC] Options"),
                 font,
                 TextColor(Color::srgba(0.75, 0.72, 0.68, 0.55)),
             ));

@@ -19,12 +19,12 @@ use crate::{
     textures::{TextureSet, TEX_SIZE},
 };
 
-const CEILING: [u8; 3] = [10, 16, 12];
-const FLOOR_A: [u8; 3] = [28, 22, 30];
-const FLOOR_B: [u8; 3] = [14, 12, 16];
-const FOG_RGB: [u8; 3] = [4, 2, 4];
-const FOG_START: f32 = 2.5;
-const FOG_END: f32 = 14.0;
+const CEILING: [u8; 3] = [14, 18, 16];
+const FLOOR_A: [u8; 3] = [34, 26, 34];
+const FLOOR_B: [u8; 3] = [18, 14, 18];
+const FOG_RGB: [u8; 3] = [12, 6, 8];
+const FOG_START: f32 = 3.0;
+const FOG_END: f32 = 16.0;
 
 /// Per-column wall depth for sprite occlusion (map units).
 #[derive(Resource, Clone)]

@@ -48,6 +48,10 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     let barrel = 1.0 + dot(centered, centered) * 0.045;
     let warped_uv = centered * barrel * 0.5 + 0.5;
 
+    // Edge weight: clean monitor center, dirt/static on the glass rim.
+    // Inspired by a clear viewing screen with grime only at the bezel.
+    let edge = smoothstep(0.28, 0.98, length(centered));
+
     // Soft chromatic aberration for that "broken CRT" edge.
     let aberr = 0.0018 * length(centered) + pain * 0.0025;
     var color = textureSample(crt_source, crt_sampler, warped_uv);
@@ -58,19 +62,20 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     // Floor-cluster palette grade.
     var rgb = color.rgb * palette_tint.rgb;
 
-    // Horizontal scanlines.
+    // Horizontal scanlines — lighter in the readable center.
     let scan = 0.5 + 0.5 * sin(warped_uv.y * 200.0 * 3.14159265);
-    let scan_mod = mix(1.0, scan, scanline_strength);
+    let scan_amt = scanline_strength * mix(0.28, 1.0, edge);
+    let scan_mod = mix(1.0, scan, scan_amt);
     rgb = rgb * scan_mod;
 
-    // Edge vignette.
+    // Edge vignette (atmosphere stays on the rim).
     let vig = 1.0 - dot(centered * vignette_strength, centered * vignette_strength);
-    rgb = rgb * clamp(vig, 0.15, 1.0);
+    rgb = rgb * clamp(vig, 0.22, 1.0);
 
-    // Ordered dither for crunchy lo-fi gradients.
+    // Ordered dither for crunchy lo-fi gradients — mostly at edges.
     let px = warped_uv * vec2<f32>(320.0, 200.0);
     let threshold = bayer4(px) - 0.5;
-    rgb = rgb + threshold * dither_strength * 0.08;
+    rgb = rgb + threshold * dither_strength * 0.08 * mix(0.25, 1.0, edge);
 
     // Phosphor glow — soft green-white bloom on bright pixels.
     let luma = dot(rgb, vec3<f32>(0.299, 0.587, 0.114));
@@ -81,12 +86,14 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     rgb = mix(rgb, vec3<f32>(0.85, 0.08, 0.1), pain * 0.55);
     rgb = mix(rgb, vec3<f32>(0.15, 0.55, 0.75), serum * 0.35);
 
-    // Animated grain.
-    let grain = (hash21(px + vec2<f32>(time * 37.0, time * 19.0)) - 0.5) * 0.045;
+    // Animated grain only on the rim — keeps the playfield CCTV-legible.
+    let grain = (hash21(px + vec2<f32>(time * 37.0, time * 19.0)) - 0.5)
+        * 0.038
+        * edge;
     rgb = rgb + grain;
 
-    // Slight crush into blacks.
-    rgb = max(rgb - vec3<f32>(0.02), vec3<f32>(0.0));
+    // Slight crush into blacks (gentler so midtones stay readable).
+    rgb = max(rgb - vec3<f32>(0.012), vec3<f32>(0.0));
     rgb = clamp(rgb, vec3<f32>(0.0), vec3<f32>(1.0));
 
     return vec4<f32>(rgb, color.a);

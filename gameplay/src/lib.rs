@@ -37,6 +37,7 @@ impl Plugin for GameplayPlugin {
             .init_resource::<game::SoftInGameResume>()
             .init_resource::<PuzzleRegistry>()
             .init_resource::<interact::InteractionPrompt>()
+            .init_resource::<ui::LevelMapState>()
             .init_resource::<save::ActiveSaveSlot>()
             .init_resource::<save::PendingLoad>()
             .init_resource::<player::PainFlash>()
@@ -106,7 +107,11 @@ impl Plugin for GameplayPlugin {
             )
             .add_systems(
                 OnExit(GameState::InGame),
-                (game::release_mouse, ui::disable_pixel_hud),
+                (
+                    game::release_mouse,
+                    ui::disable_pixel_hud,
+                    ui::reset_level_map_on_exit,
+                ),
             )
             // --- Elevator: autosave current floor, then ride ---
             .add_systems(
@@ -144,7 +149,8 @@ impl Plugin for GameplayPlugin {
                 )
                     .chain(),
             )
-            .add_systems(Update, game::flow_input)
+            // Esc must see map-open before handle_level_map_input closes it.
+            .add_systems(Update, game::flow_input.before(ui::handle_level_map_input))
             .add_systems(
                 Update,
                 (
@@ -175,7 +181,8 @@ impl Plugin for GameplayPlugin {
                     combat::tick_hit_flash.in_set(PlayerSet::Present),
                     combat::sync_hit_flash_visual.in_set(PlayerSet::Present),
                 )
-                    .run_if(in_state(GameState::InGame)),
+                    .run_if(in_state(GameState::InGame))
+                    .run_if(ui::level_map_not_open),
             )
             .add_systems(
                 Update,
@@ -217,10 +224,11 @@ impl Plugin for GameplayPlugin {
                     ui::sync_vitals_hud,
                     ui::sync_boss_hud,
                     puzzle::sync_dna_hud,
+                    ui::handle_level_map_input,
                     interact::update_interaction_prompt,
-                    interact::try_interact,
+                    interact::try_interact.run_if(ui::level_map_not_open),
                     interact::sync_prompt_ui,
-                    game::request_elevator,
+                    game::request_elevator.run_if(ui::level_map_not_open),
                 )
                     .run_if(in_state(GameState::InGame)),
             );

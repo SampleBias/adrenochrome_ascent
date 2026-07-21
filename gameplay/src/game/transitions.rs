@@ -208,6 +208,7 @@ pub fn flow_input(
     mut next_state: ResMut<NextState<GameState>>,
     mut exit: MessageWriter<AppExit>,
     mut settings: ResMut<super::GameSettings>,
+    map_state: Res<crate::ui::LevelMapState>,
 ) {
     match state.get() {
         GameState::MainMenu => {
@@ -332,7 +333,8 @@ pub fn flow_input(
             }
         }
         GameState::InGame => {
-            if keys.just_pressed(KeyCode::Escape) {
+            // Esc closes the level map first (handled in handle_level_map_input).
+            if keys.just_pressed(KeyCode::Escape) && !map_state.open {
                 *options_return = OptionsReturn::InGame;
                 next_state.set(GameState::Options);
             }

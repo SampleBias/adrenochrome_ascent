@@ -14,12 +14,14 @@ use crate::player::{
     MAX_ARMOR, MAX_HEALTH,
 };
 use crate::puzzle::PuzzleRegistry;
+use crate::ui::LevelMapState;
 
 /// Push vitals / prompts into the 320×200 [`PixelHud`] buffer.
 pub fn sync_pixel_hud(
     floor: Res<CurrentFloor>,
     info: Res<LoadedFloorInfo>,
     prompt: Res<InteractionPrompt>,
+    map_state: Res<LevelMapState>,
     pa: Res<PaAnnouncement>,
     fight: Res<BossFight>,
     warden: Res<WardenOverrides>,
@@ -49,7 +51,11 @@ pub fn sync_pixel_hud(
         hud.ammo = inv.ammo_for(stats.ammo);
     }
 
-    hud.prompt = prompt.text.clone().unwrap_or_default();
+    hud.prompt = if map_state.locked_flash > 0.0 {
+        "MAP LOCKED — first challenge".to_string()
+    } else {
+        prompt.text.clone().unwrap_or_default()
+    };
     if hud.prompt.len() > 36 {
         hud.prompt.truncate(36);
     }
