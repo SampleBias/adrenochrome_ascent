@@ -1,7 +1,7 @@
 //! NES-era attract backdrop painted into the 320×200 framebuffer.
 //!
-//! Late-80s cartridge title vibe: limited palette, mansion silhouette, blood
-//! sky, neon door — matches the lo-fi horror refs without running the raycaster.
+//! Late-80s cartridge title vibe: limited palette, asylum silhouette, blood
+//! sky, institutional decay — dark brick clarity with grimy doors/windows.
 
 use bevy::prelude::*;
 
@@ -29,40 +29,290 @@ fn hash2(x: u32, y: u32) -> u32 {
     n ^ (n >> 16)
 }
 
-/// Lit window with a dark frame and prison-style bars.
-fn draw_barred_window(
+fn mix(a: [u8; 3], b: [u8; 3], t: u8) -> [u8; 3] {
+    // t = 0..=16 toward b
+    let t = t.min(16) as u16;
+    [
+        ((a[0] as u16 * (16 - t) + b[0] as u16 * t) / 16) as u8,
+        ((a[1] as u16 * (16 - t) + b[1] as u16 * t) / 16) as u8,
+        ((a[2] as u16 * (16 - t) + b[2] as u16 * t) / 16) as u8,
+    ]
+}
+
+/// Recessed institutional window: rusted metal frame, dirty glass, wire mesh,
+/// moss bleed — decay theme with sharp pixel clarity.
+fn draw_decay_window(
     buf: &mut [u8],
     w: usize,
     wx: usize,
     wy: usize,
     ww: usize,
     wh: usize,
-    glass: [u8; 3],
-    frame: [u8; 3],
-    bar: [u8; 3],
+    glow: [u8; 3],
+    flicker: f32,
 ) {
-    // Outer frame (1px border around the glass).
+    let recess = [18, 10, 12];
+    let frame_outer = [42, 28, 24];
+    let frame_rust = [78, 38, 28];
+    let frame_dark = [22, 14, 12];
+    let mesh = [28, 22, 20];
+    let moss = [36, 52, 28];
+    let mold = [18, 28, 16];
+    let drip = [48, 32, 24];
+    let spark = [120, 110, 100];
+
+    let lit = [
+        (glow[0] as f32 * (0.55 + flicker * 0.45)) as u8,
+        (glow[1] as f32 * (0.55 + flicker * 0.45)) as u8,
+        (glow[2] as f32 * (0.55 + flicker * 0.45)) as u8,
+    ];
+
+    // Recess / shadow lip around the opening.
     for dy in 0..wh {
         for dx in 0..ww {
-            let on_frame = dx == 0 || dx == ww - 1 || dy == 0 || dy == wh - 1;
-            put(buf, w, wx + dx, wy + dy, if on_frame { frame } else { glass });
+            let on_lip = dx == 0 || dx == ww - 1 || dy == 0 || dy == wh - 1;
+            if on_lip {
+                put(buf, w, wx + dx, wy + dy, recess);
+            }
         }
     }
-    // Vertical bars through the glass (skip the outer frame).
-    let bar_xs = [ww / 3, (2 * ww) / 3];
-    for &bx in &bar_xs {
-        if bx == 0 || bx >= ww - 1 {
-            continue;
-        }
-        for dy in 1..wh - 1 {
-            put(buf, w, wx + bx, wy + dy, bar);
+
+    // Inner rusted metal frame (2px).
+    for dy in 1..wh - 1 {
+        for dx in 1..ww - 1 {
+            let on_frame = dx <= 2 || dx >= ww - 3 || dy <= 2 || dy >= wh - 3;
+            if !on_frame {
+                continue;
+            }
+            let hsh = hash2((wx + dx) as u32, (wy + dy) as u32);
+            let rgb = if hsh % 7 == 0 {
+                frame_rust
+            } else if hsh % 5 == 0 {
+                frame_dark
+            } else if dx == 1 || dy == 1 {
+                frame_outer
+            } else {
+                frame_dark
+            };
+            put(buf, w, wx + dx, wy + dy, rgb);
         }
     }
-    // One horizontal crossbar mid-pane.
-    let by = wh / 2;
+
+    // Dirty glass pane with sickly interior light.
+    for dy in 3..wh - 3 {
+        for dx in 3..ww - 3 {
+            let fx = wx + dx;
+            let fy = wy + dy;
+            let hsh = hash2(fx as u32, fy as u32);
+            let mut rgb = lit;
+
+            // Vertical water / rust streaks.
+            if (fx % 3 == 0 && hsh % 3 != 0) || (hsh % 19 == 0) {
+                rgb = mix(rgb, drip, 7);
+            }
+            // Moss / mold bloom toward bottom corners.
+            let near_bottom = dy as f32 / wh as f32;
+            if near_bottom > 0.55 && (hsh % 4 == 0 || dx <= 4 || dx >= ww - 5) {
+                rgb = mix(rgb, moss, (6.0 + near_bottom * 8.0) as u8);
+            }
+            if near_bottom > 0.7 && hsh % 5 == 0 {
+                rgb = mix(rgb, mold, 10);
+            }
+            // Grime blotches — darken glass, kill clean glow.
+            if hsh % 11 == 0 {
+                rgb = [
+                    rgb[0].saturating_sub(28),
+                    rgb[1].saturating_sub(22),
+                    rgb[2].saturating_sub(18),
+                ];
+            }
+            // Sparse highlight sparkles (brick-ref grit).
+            if hsh % 47 == 0 {
+                rgb = spark;
+            }
+
+            put(buf, w, fx, fy, rgb);
+        }
+    }
+
+    // Wire mesh / security screen over glass.
+    for dy in 3..wh - 3 {
+        for dx in 3..ww - 3 {
+            if (dx + dy) % 3 == 0 || dx % 4 == 0 {
+                let hsh = hash2((wx + dx + 9) as u32, (wy + dy) as u32);
+                if hsh % 3 != 0 {
+                    put(buf, w, wx + dx, wy + dy, mesh);
+                }
+            }
+        }
+    }
+
+    // Single thicker cross-mullion (institutional casement).
+    let mx = ww / 2;
+    let my = wh / 2;
+    for dy in 2..wh - 2 {
+        put(buf, w, wx + mx, wy + dy, frame_dark);
+        if mx + 1 < ww - 2 {
+            put(buf, w, wx + mx + 1, wy + dy, frame_rust);
+        }
+    }
+    for dx in 2..ww - 2 {
+        put(buf, w, wx + dx, wy + my, frame_dark);
+    }
+
+    // Bottom sill moss drip onto brick.
     for dx in 1..ww - 1 {
-        put(buf, w, wx + dx, wy + by, bar);
+        let hsh = hash2((wx + dx) as u32, (wy + wh) as u32);
+        if hsh % 3 == 0 {
+            put(buf, w, wx + dx, wy + wh, moss);
+        }
+        if hsh % 5 == 0 && wy + wh + 1 < RENDER_HEIGHT as usize {
+            put(buf, w, wx + dx, wy + wh + 1, mold);
+        }
     }
+}
+
+/// Heavy industrial metal door: rust, viewing slot, peeling notices, grit.
+fn draw_decay_door(
+    buf: &mut [u8],
+    w: usize,
+    door_x: usize,
+    door_y: usize,
+    door_w: usize,
+    door_h: usize,
+    pulse: f32,
+) {
+    let metal = [38, 36, 34];
+    let metal_hi = [58, 52, 46];
+    let metal_lo = [22, 20, 18];
+    let rust = [92, 42, 28];
+    let rust_dark = [56, 26, 18];
+    let frame = [28, 18, 16];
+    let frame_hi = [48, 30, 24];
+    let moss = [32, 48, 26];
+    let notice = [70, 62, 48];
+    let notice_stain = [52, 40, 28];
+    let slot_glass = [
+        (28.0 + pulse * 18.0) as u8,
+        (48.0 + pulse * 22.0) as u8,
+        (36.0 + pulse * 10.0) as u8,
+    ];
+    let latch = [72, 68, 58];
+    let spark = [130, 118, 105];
+
+    // Outer recessed jamb.
+    for dy in 0..door_h {
+        for dx in 0..door_w {
+            let edge = dx == 0 || dx == door_w - 1 || dy == 0;
+            if edge {
+                put(
+                    buf,
+                    w,
+                    door_x + dx,
+                    door_y + dy,
+                    if dy == 0 || dx == 0 { frame_hi } else { frame },
+                );
+            }
+        }
+    }
+
+    // Door face — gunmetal with rust blooms and grit.
+    for dy in 1..door_h {
+        for dx in 1..door_w - 1 {
+            let fx = door_x + dx;
+            let fy = door_y + dy;
+            let hsh = hash2(fx as u32 * 3, fy as u32 * 5);
+            let mut rgb = if hsh % 13 == 0 {
+                metal_hi
+            } else if hsh % 9 == 0 {
+                metal_lo
+            } else {
+                metal
+            };
+
+            // Rust along edges + random blooms.
+            let edge_rust = dx <= 2 || dx >= door_w - 3 || dy >= door_h - 3;
+            if edge_rust || hsh % 17 == 0 {
+                rgb = mix(rgb, rust, if edge_rust { 9 } else { 5 });
+            }
+            if hsh % 23 == 0 {
+                rgb = mix(rgb, rust_dark, 8);
+            }
+            // Moss / damp at the base.
+            if dy > door_h * 3 / 4 && hsh % 4 == 0 {
+                rgb = mix(rgb, moss, 7);
+            }
+            // Single-pixel sparkles for brick-ref clarity.
+            if hsh % 61 == 0 {
+                rgb = spark;
+            }
+
+            put(buf, w, fx, fy, rgb);
+        }
+    }
+
+    // Raised panel lines (industrial plate seams).
+    for dx in 3..door_w - 3 {
+        put(buf, w, door_x + dx, door_y + door_h / 3, metal_lo);
+        put(buf, w, door_x + dx, door_y + (door_h * 2) / 3, metal_lo);
+    }
+    for dy in 2..door_h - 1 {
+        put(buf, w, door_x + door_w / 2, door_y + dy, metal_lo);
+    }
+
+    // Small high viewing slot — dirty wire-glass, not neon.
+    let slot_w = 7;
+    let slot_h = 5;
+    let slot_x = door_x + (door_w - slot_w) / 2;
+    let slot_y = door_y + 4;
+    for dy in 0..slot_h {
+        for dx in 0..slot_w {
+            let on_rim = dx == 0 || dx == slot_w - 1 || dy == 0 || dy == slot_h - 1;
+            let rgb = if on_rim {
+                frame
+            } else if (dx + dy) % 2 == 0 {
+                mesh_tone(slot_glass)
+            } else {
+                let hsh = hash2((slot_x + dx) as u32, (slot_y + dy) as u32);
+                if hsh % 4 == 0 {
+                    mix(slot_glass, rust_dark, 6)
+                } else {
+                    slot_glass
+                }
+            };
+            put(buf, w, slot_x + dx, slot_y + dy, rgb);
+        }
+    }
+
+    // Weathered paper notices taped mid-door.
+    for (ox, oy, nw, nh) in [(3usize, door_h / 2 - 1, 4usize, 5usize), (door_w - 7, door_h / 2 + 2, 3, 4)]
+    {
+        for dy in 0..nh {
+            for dx in 0..nw {
+                let hsh = hash2((door_x + ox + dx) as u32, (door_y + oy + dy) as u32);
+                let rgb = if hsh % 5 == 0 { notice_stain } else { notice };
+                put(buf, w, door_x + ox + dx, door_y + oy + dy, rgb);
+            }
+        }
+    }
+
+    // Latch / handle block.
+    let hx = door_x + door_w - 5;
+    let hy = door_y + door_h / 2;
+    for dy in 0..3 {
+        for dx in 0..3 {
+            put(buf, w, hx + dx, hy + dy, if dx == 1 && dy == 1 { latch } else { metal_lo });
+        }
+    }
+    put(buf, w, hx + 1, hy + 1, spark);
+}
+
+fn mesh_tone(base: [u8; 3]) -> [u8; 3] {
+    [
+        base[0].saturating_sub(14),
+        base[1].saturating_sub(10),
+        base[2].saturating_sub(12),
+    ]
 }
 
 /// Paint the title attract scene. Called at a low rate from [`crate::raycaster::render_frame`].
@@ -108,7 +358,7 @@ pub fn draw_attract_title(buf: &mut [u8], time_secs: f32) {
         }
     }
 
-    // Mansion / asylum — denser NES silhouette with eaves, chimney, barred windows.
+    // Asylum facade — dark red brick clarity with institutional decay accents.
     let base_y = h * 5 / 8;
     let mid = w / 2;
     let half_w = 78;
@@ -117,15 +367,17 @@ pub fn draw_attract_title(buf: &mut [u8], time_secs: f32) {
     let roof_h = 32;
     let roof_top = base_y - 62;
     let eave_y = roof_top + roof_h;
-    let wall = [14, 10, 16];
-    let wall_hi = [22, 16, 26];
-    let wall_lo = [8, 6, 10];
+    // Brick palette from the dark maroon reference.
+    let brick_a = [72, 22, 28];
+    let brick_b = [54, 16, 20];
+    let brick_c = [88, 30, 34];
+    let mortar = [10, 6, 8];
+    let brick_spark = [140, 120, 110];
+    let moss = [34, 50, 28];
     let roof = [28, 12, 18];
     let roof_ridge = [48, 20, 28];
-    let frame = [4, 3, 6];
-    let bar = [10, 8, 12];
 
-    // Main pitched roof + body fill with light brick/stone noise.
+    // Main pitched roof + body fill with running-bond brick.
     for y in roof_top..base_y {
         let roof_slope = ((y - roof_top) * half_w) / roof_h;
         for x in left..right {
@@ -147,23 +399,35 @@ pub fn draw_attract_title(buf: &mut [u8], time_secs: f32) {
                     roof
                 }
             } else {
-                // Mortar lines + subtle vertical pilasters.
-                let brick = (y - eave_y) % 3 == 0;
-                let mortar_x = (x + (y / 3) * 2) % 5 == 0;
-                let pilaster = (x as i32 - left as i32) % 26 == 0 || (right as i32 - x as i32) % 26 == 0;
-                if brick {
-                    wall_lo
-                } else if mortar_x {
-                    [10, 7, 12]
-                } else if pilaster {
-                    wall_hi
-                } else if hash2(x as u32 + 3, y as u32) % 17 == 0 {
-                    [18, 12, 20]
+                let row = (y - eave_y) / 3;
+                let offset = if row % 2 == 0 { 0 } else { 3 };
+                let on_mortar_h = (y - eave_y) % 3 == 2;
+                let on_mortar_v = (x + offset) % 6 == 5;
+                let hsh = hash2(x as u32, y as u32);
+                if on_mortar_h || on_mortar_v {
+                    mortar
+                } else if hsh % 53 == 0 {
+                    brick_spark
+                } else if hsh % 7 == 0 {
+                    brick_c
+                } else if hsh % 3 == 0 {
+                    brick_b
                 } else {
-                    wall
+                    brick_a
                 }
             };
             put(buf, w, x, y, rgb);
+        }
+    }
+
+    // Moss / mold stains low on the facade (decay theme).
+    for y in (eave_y + 18)..base_y {
+        for x in left..right {
+            let hsh = hash2(x as u32 + 11, y as u32 + 7);
+            let near_ground = (y as f32 - eave_y as f32) / (base_y - eave_y) as f32;
+            if near_ground > 0.55 && hsh % (4 + ((1.0 - near_ground) * 8.0) as u32) == 0 {
+                put(buf, w, x, y, moss);
+            }
         }
     }
 
@@ -204,64 +468,54 @@ pub fn draw_attract_title(buf: &mut [u8], time_secs: f32) {
         }
     }
 
-    // Lit barred windows (sick green / blood red — NES limited accents).
+    // Grimy institutional windows — dim sickly glow, not arcade neon.
     let windows = [
-        (left + 14, eave_y + 6, [180, 40, 48]),
-        (left + 36, eave_y + 6, [40, 160, 70]),
-        (right - 50, eave_y + 6, [180, 40, 48]),
-        (right - 28, eave_y + 6, [40, 160, 70]),
-        (left + 24, eave_y + 16, [200, 50, 60]),
-        (right - 40, eave_y + 16, [50, 170, 80]),
+        (left + 12, eave_y + 5, [70, 42, 38]),
+        (left + 34, eave_y + 5, [48, 70, 42]),
+        (right - 52, eave_y + 5, [70, 42, 38]),
+        (right - 30, eave_y + 5, [48, 70, 42]),
+        (left + 22, eave_y + 20, [62, 38, 34]),
+        (right - 42, eave_y + 20, [42, 62, 38]),
     ];
-    for (wx, wy, col) in windows {
-        draw_barred_window(buf, w, wx, wy, 9, 11, col, frame, bar);
+    for (i, (wx, wy, col)) in windows.iter().enumerate() {
+        let flick = 0.65
+            + 0.35
+                * ((time_secs * (1.7 + i as f32 * 0.35) + i as f32).sin() * 0.5 + 0.5);
+        draw_decay_window(buf, w, *wx, *wy, 12, 13, *col, flick);
     }
 
-    // Central double door — cyan neon pulse (style-ref uncanny accent).
-    let door_w = 16;
-    let door_h = 24;
+    // Heavy rusted metal door with viewing slot + taped notices.
+    let door_w = 18;
+    let door_h = 26;
     let door_x = mid - door_w / 2;
     let door_y = base_y - door_h;
-    let glow = (90.0 + pulse * 140.0) as u8;
-    for dy in 0..door_h {
-        for dx in 0..door_w {
-            let edge = dx == 0 || dx == door_w - 1 || dy == 0;
-            let seam = dx == door_w / 2 - 1 || dx == door_w / 2;
-            let panel = (dy > 3 && dy < 11 && dx > 2 && dx < door_w / 2 - 2)
-                || (dy > 3 && dy < 11 && dx > door_w / 2 + 1 && dx < door_w - 3)
-                || (dy > 13 && dy < door_h - 2 && dx > 2 && dx < door_w / 2 - 2)
-                || (dy > 13 && dy < door_h - 2 && dx > door_w / 2 + 1 && dx < door_w - 3);
-            let rgb = if edge {
-                [glow / 3, glow, glow.saturating_add(20)]
-            } else if seam {
-                [glow / 5, glow / 2, glow.saturating_add(8) / 2]
-            } else if panel {
-                [8, 14, 20]
-            } else {
-                [12, 20, 28]
-            };
-            put(buf, w, door_x + dx, door_y + dy, rgb);
-        }
-    }
-    // Door knobs.
-    put(buf, w, door_x + door_w / 2 - 3, door_y + door_h / 2, [glow / 2, glow, glow]);
-    put(buf, w, door_x + door_w / 2 + 2, door_y + door_h / 2, [glow / 2, glow, glow]);
+    draw_decay_door(buf, w, door_x, door_y, door_w, door_h, pulse);
 
-    // Ground blood wash under the door.
+    // Damp stain / blood wash under the door.
     for x in door_x.saturating_sub(20)..(door_x + door_w + 20).min(w) {
         for y in base_y..(base_y + 6).min(h) {
             let fade = 1.0 - (x as i32 - w as i32 / 2).unsigned_abs() as f32 / 40.0;
             if fade > 0.0 {
+                let hsh = hash2(x as u32, y as u32);
+                let moss_mix = hsh % 3 == 0;
                 put(
                     buf,
                     w,
                     x,
                     y,
-                    [
-                        (90.0 * fade) as u8,
-                        (16.0 * fade) as u8,
-                        (32.0 * fade) as u8,
-                    ],
+                    if moss_mix {
+                        [
+                            (28.0 * fade) as u8,
+                            (42.0 * fade) as u8,
+                            (22.0 * fade) as u8,
+                        ]
+                    } else {
+                        [
+                            (72.0 * fade) as u8,
+                            (18.0 * fade) as u8,
+                            (24.0 * fade) as u8,
+                        ]
+                    },
                 );
             }
         }
